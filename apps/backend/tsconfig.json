@@ -1,6 +1,7 @@
 {
   "extends": "@repo/typescript-config/nest.json",
   "compilerOptions": {
+    "rootDir": "./src",
     "resolvePackageJsonExports": true
   },
   "include": ["src"],
