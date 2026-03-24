@@ -3,7 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
+  "main": "./base.json",
   "publishConfig": {
     "access": "public"
+  },
+  "exports": {
+    "./base.json": "./base.json",
+    "./nest.json": "./nest.json",
+    "./react.json": "./react.json"
   }
 }
