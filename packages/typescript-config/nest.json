@@ -2,6 +2,9 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./base.json",
   "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
     "target": "ES2023",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
