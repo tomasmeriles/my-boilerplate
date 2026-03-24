@@ -5,6 +5,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
+    "lint": "eslint app/",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc"
   },
@@ -18,10 +19,13 @@
   },
   "devDependencies": {
     "@react-router/dev": "7.13.2",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^22",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "eslint": "^9.18.0",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
     "vite": "^7.1.7",
