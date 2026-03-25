@@ -1,6 +1,10 @@
 # Override for production: adds backend and web as containers.
 # Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 services:
+  db:
+    # In production, we dont need to expose the db port to the host, as backend will connect to it internally.
+    ports: !reset []
+
   backend:
     build:
       context: .
