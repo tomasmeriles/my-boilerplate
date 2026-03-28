@@ -16,7 +16,8 @@ export const configSchema = z.object({
 
   // JWT
   JWT_SECRET: z.string().min(32),
-  JWT_EXPIRATION_HOURS: z.coerce.number().default(168), // 7 days
+  JWT_ACCESS_EXPIRES_MINUTES: z.coerce.number(),
+  JWT_REFRESH_EXPIRES_DAYS: z.coerce.number(),
 
   // ---------------------------------------------------------------------------
   // Non-critical configs - these have defaults, so the app can start even if they're missing/invalid.
