@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import * as crypto from 'crypto';
+import crypto from 'crypto';
 import { DateTime } from 'luxon';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RefreshTokenWithUser } from '../interfaces/refresh-token.interface';

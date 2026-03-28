@@ -13,6 +13,7 @@ import { type User } from '@prisma/client';
 import type { Request, Response } from 'express';
 import { ConfigService } from '../../config/services/config.service';
 import { AuthService } from '../services/auth.service';
+import { Cookie } from '../decorators/cookie.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { GoogleOAuthGuard } from '../guards/google-oauth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -64,12 +65,9 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.NO_CONTENT)
   async refresh(
-    @Req() req: Request,
+    @Cookie(REFRESH_COOKIE) refreshToken: string | undefined,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
-    const refreshToken = (req.cookies as Record<string, string>)?.[
-      REFRESH_COOKIE
-    ];
     if (!refreshToken) {
       throw new UnauthorizedException('No refresh token provided');
     }
@@ -100,12 +98,9 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(
-    @Req() req: Request,
+    @Cookie(REFRESH_COOKIE) refreshToken: string | undefined,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
-    const refreshToken = (req.cookies as Record<string, string>)?.[
-      REFRESH_COOKIE
-    ];
     if (refreshToken) {
       await this.auth.revokeRefreshToken(refreshToken);
     }
@@ -139,7 +134,7 @@ export class AuthController {
       secure: isProduction,
       sameSite: 'lax',
       maxAge: refreshMaxAge,
-      path: '/auth/refresh', // scoped — only sent to the refresh endpoint
+      path: '/auth/refresh', // scoped - only sent to the refresh endpoint
     });
   }
 }
