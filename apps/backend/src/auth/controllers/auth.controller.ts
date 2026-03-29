@@ -9,9 +9,11 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { type User } from '@prisma/client';
-import type { Request, Response } from 'express';
+import { AuditAction, AuditResource, type User } from '@prisma/client';
+import type { Response } from 'express';
 import { ConfigService } from '../../config/services/config.service';
+import { Audit } from '../../modules/audit/decorators/audit.decorator';
+import type { AuditableRequest } from '../../modules/audit/interceptors/audit.interceptor';
 import { AuthService } from '../services/auth.service';
 import { Cookie } from '../decorators/cookie.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
@@ -43,11 +45,13 @@ export class AuthController {
   /** Handles the OAuth callback, issues JWT pair, and sets cookies */
   @Get('google/callback')
   @UseGuards(GoogleOAuthGuard)
+  @Audit(AuditAction.LOGIN, AuditResource.USER)
   async googleCallback(
-    @Req() req: Request & { user: OAuthUser },
+    @Req() req: AuditableRequest & { user: OAuthUser },
     @Res() res: Response,
   ): Promise<void> {
-    const { tokens } = await this.auth.handleOAuthLogin(req.user);
+    const { tokens, user } = await this.auth.handleOAuthLogin(req.user);
+    req._audit = { userId: user.id, metadata: { provider: req.user.provider } };
     this.setTokenCookies(
       res,
       tokens.accessToken,
@@ -64,15 +68,18 @@ export class AuthController {
   /** Issues a new access + refresh token pair using the refresh token cookie */
   @Post('refresh')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Audit(AuditAction.TOKEN_REFRESH, AuditResource.SESSION)
   async refresh(
     @Cookie(REFRESH_COOKIE) refreshToken: string | undefined,
+    @Req() req: AuditableRequest,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
     if (!refreshToken) {
       throw new UnauthorizedException('No refresh token provided');
     }
 
-    const tokens = await this.auth.refreshTokenPair(refreshToken);
+    const { tokens, userId } = await this.auth.refreshTokenPair(refreshToken);
+    req._audit = { userId };
     this.setTokenCookies(
       res,
       tokens.accessToken,
@@ -97,13 +104,17 @@ export class AuthController {
   /** Revokes the refresh token and clears both cookies */
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Audit(AuditAction.LOGOUT, AuditResource.SESSION)
   async logout(
     @Cookie(REFRESH_COOKIE) refreshToken: string | undefined,
+    @Req() req: AuditableRequest,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
+    let userId: string | null = null;
     if (refreshToken) {
-      await this.auth.revokeRefreshToken(refreshToken);
+      userId = await this.auth.revokeRefreshToken(refreshToken);
     }
+    req._audit = { userId };
     res.clearCookie(ACCESS_COOKIE, { path: '/' });
     res.clearCookie(REFRESH_COOKIE, { path: '/' });
   }

@@ -17,6 +17,7 @@ model User {
 
   oauthAccounts OAuthAccount[]
   refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
 
   @@map("users")
 }
@@ -66,4 +67,44 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// AuditLog model
+// ---------------------------------------------------------------------------
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  TOKEN_REFRESH
+  TOKEN_REVOKED
+  REGISTER
+  UPDATE
+  DELETE
+}
+
+enum AuditResource {
+  USER
+  SESSION
+  OAUTH_ACCOUNT
+}
+
+model AuditLog {
+  id         String        @id @default(cuid())
+  userId     String?
+  action     AuditAction
+  resource   AuditResource
+  resourceId String?
+  ip         String?
+  userAgent  String?
+  metadata   Json?
+  createdAt  DateTime      @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

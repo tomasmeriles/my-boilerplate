@@ -32,7 +32,9 @@ export class AuthService {
   /**
    * Validates a refresh token, rotates it, and issues a new token pair.
    */
-  async refreshTokenPair(refreshToken: string): Promise<TokenPair> {
+  async refreshTokenPair(
+    refreshToken: string,
+  ): Promise<{ tokens: TokenPair; userId: string }> {
     const record = await this.refreshTokens.consume(refreshToken);
 
     const newRefreshToken = this.refreshTokens.generate();
@@ -47,16 +49,19 @@ export class AuthService {
 
     const accessToken = this.signAccessToken(record.user);
     return {
-      accessToken,
-      refreshToken: newRefreshToken,
-      refreshMaxAge: this.refreshMaxAgeMs(),
+      tokens: {
+        accessToken,
+        refreshToken: newRefreshToken,
+        refreshMaxAge: this.refreshMaxAgeMs(),
+      },
+      userId: record.userId,
     };
   }
 
   /**
-   * Revokes the given refresh token (logout).
+   * Revokes the given refresh token (logout) and returns the owner's userId.
    */
-  revokeRefreshToken(refreshToken: string): Promise<void> {
+  revokeRefreshToken(refreshToken: string): Promise<string | null> {
     return this.refreshTokens.revoke(refreshToken);
   }
 

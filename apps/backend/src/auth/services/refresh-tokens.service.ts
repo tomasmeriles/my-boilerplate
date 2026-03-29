@@ -82,12 +82,17 @@ export class RefreshTokensService {
     ]);
   }
 
-  async revoke(token: string): Promise<void> {
+  async revoke(token: string): Promise<string | null> {
     const tokenHash = this.hash(token);
+    const record = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      select: { userId: true },
+    });
     await this.prisma.refreshToken.updateMany({
       where: { tokenHash, revokedAt: null },
       data: { revokedAt: DateTime.utc().toJSDate() },
     });
+    return record?.userId ?? null;
   }
 
   async revokeAllForUser(userId: string): Promise<void> {
