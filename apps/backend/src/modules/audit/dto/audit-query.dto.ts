@@ -1,0 +1,33 @@
+import { Type } from 'class-transformer';
+import { IsDate, IsEnum, IsOptional, IsString } from 'class-validator';
+import { AuditAction, AuditResource } from '@prisma/client';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { WithSort } from '../../../common/dto/sort-query.dto';
+import { AUDIT_LOG_SORT_FIELDS } from '../selects/audit-log.select';
+
+export class AuditQueryDto extends WithSort(
+  AUDIT_LOG_SORT_FIELDS,
+  PaginationQueryDto,
+) {
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
+  @IsOptional()
+  @IsEnum(AuditAction)
+  action?: AuditAction;
+
+  @IsOptional()
+  @IsEnum(AuditResource)
+  resource?: AuditResource;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  from?: Date;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  to?: Date;
+}
