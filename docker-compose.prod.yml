@@ -5,6 +5,10 @@ services:
     # In production, we dont need to expose the db port to the host, as backend will connect to it internally.
     ports: !reset []
 
+  redis:
+    # In production, we don't expose Redis to the host.
+    ports: !reset []
+
   backend:
     build:
       context: .
@@ -16,6 +20,8 @@ services:
       - apps/backend/.env
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   web:

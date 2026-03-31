@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { UpsertOAuthUserInput } from '../interfaces/user.interface';
+import type {
+  UpsertOAuthUserInput,
+  UserWithMemberships,
+} from '../interfaces/user.interface';
 
 @Injectable()
 export class UsersService {
@@ -13,6 +16,13 @@ export class UsersService {
 
   findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { email } });
+  }
+
+  findWithMemberships(id: string): Promise<UserWithMemberships | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: { memberships: true },
+    });
   }
 
   /**

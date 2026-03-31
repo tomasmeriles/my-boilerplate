@@ -1,21 +1,29 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import { DateTime } from 'luxon';
+import type { CookieOptions } from 'express';
 import { UsersService } from '../../modules/users/services/users.service';
 import { RefreshTokensService } from './refresh-tokens.service';
 import { ConfigService } from '../../config/services/config.service';
 import { OAuthUser } from '../interfaces/oauth-user.interface';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { TokenPair } from '../interfaces/token-pair.interface';
+import { CaslAbilityFactory } from '../../casl/casl-ability.factory';
+import { AbilityCacheService } from '../../casl/cache/ability-cache.service';
+import type { PackedAbility } from '../../casl/interfaces/ability.interface';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly users: UsersService,
     private readonly refreshTokens: RefreshTokensService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly abilityFactory: CaslAbilityFactory,
+    private readonly abilityCache: AbilityCacheService,
   ) {}
 
   /**
@@ -63,6 +71,77 @@ export class AuthService {
    */
   revokeRefreshToken(refreshToken: string): Promise<string | null> {
     return this.refreshTokens.revoke(refreshToken);
+  }
+
+  /**
+   * Revokes the refresh token, invalidates the ability cache, and returns the userId.
+   */
+  async logout(refreshToken: string | undefined): Promise<string | null> {
+    if (!refreshToken) return null;
+    const userId = await this.refreshTokens.revoke(refreshToken);
+    if (userId) await this.abilityCache.delAll(userId);
+    return userId;
+  }
+
+  /**
+   * Returns the current user profile and their CASL abilities for the given tenant.
+   * Uses Redis cache; falls back to DB if not cached.
+   */
+  async getMe(
+    user: User,
+    tenantId: string | null,
+  ): Promise<{ user: Omit<User, 'updatedAt'>; abilities: PackedAbility[] }> {
+    let abilities = await this.abilityCache.get(user.id, tenantId);
+
+    this.logger.debug(
+      `Cache ${abilities ? 'hit' : 'miss'} for user ${user.id} tenant ${tenantId}`,
+      abilities,
+    );
+
+    if (!abilities) {
+      const userWithMemberships = await this.users.findWithMemberships(user.id);
+      if (userWithMemberships) {
+        const built = this.abilityFactory.buildAbilities(
+          userWithMemberships,
+          tenantId,
+        );
+        abilities = built.rules;
+        await this.abilityCache.set(user.id, tenantId, abilities);
+      } else {
+        abilities = [];
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { updatedAt: _omit, ...safeUser } = user;
+    return { user: safeUser, abilities };
+  }
+
+  /** Cookie options for the access token */
+  accessCookieOptions(): CookieOptions {
+    return {
+      httpOnly: true,
+      secure: this.config.isProduction,
+      sameSite: 'lax',
+      maxAge: this.config.get('JWT_ACCESS_EXPIRES_MINUTES') * 60 * 1000,
+      path: '/',
+    };
+  }
+
+  /** Cookie options for the refresh token */
+  refreshCookieOptions(maxAge: number): CookieOptions {
+    return {
+      httpOnly: true,
+      secure: this.config.isProduction,
+      sameSite: 'lax',
+      maxAge,
+      path: '/auth/refresh',
+    };
+  }
+
+  /** Frontend URL for post-login redirect */
+  frontendUrl(): string {
+    return this.config.get('FRONTEND_URL');
   }
 
   // ---------------------------------------------------------------------------

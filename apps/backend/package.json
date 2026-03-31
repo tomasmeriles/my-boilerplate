@@ -17,9 +17,16 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:prod": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:reset": "prisma migrate reset",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@casl/ability": "^6.7.3",
+    "@casl/prisma": "^1.4.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.2",
@@ -35,6 +42,7 @@
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.3.1",
     "helmet": "^8.1.0",
+    "ioredis": "^5.6.1",
     "luxon": "^3.7.2",
     "nestjs-pino": "^4.6.1",
     "passport": "^0.7.0",

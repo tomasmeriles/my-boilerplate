@@ -19,6 +19,9 @@ export const configSchema = z.object({
   JWT_ACCESS_EXPIRES_MINUTES: z.coerce.number(),
   JWT_REFRESH_EXPIRES_DAYS: z.coerce.number(),
 
+  // Redis
+  REDIS_URL: z.string().url(),
+
   // ---------------------------------------------------------------------------
   // Non-critical configs - these have defaults, so the app can start even if they're missing/invalid.
   // ---------------------------------------------------------------------------
@@ -27,6 +30,9 @@ export const configSchema = z.object({
   // Rate limiting (public endpoints)
   THROTTLE_TTL_SECONDS: z.coerce.number().default(60),
   THROTTLE_LIMIT: z.coerce.number().default(10),
+
+  // Ability cache TTL in seconds
+  ABILITY_CACHE_TTL_SECONDS: z.coerce.number().default(60),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

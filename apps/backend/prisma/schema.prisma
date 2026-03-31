@@ -8,16 +8,18 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String     @id @default(cuid())
+  email      String     @unique
+  name       String?
+  avatar     String?
+  globalRole GlobalRole @default(MEMBER)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
   oauthAccounts OAuthAccount[]
   refreshTokens RefreshToken[]
   auditLogs     AuditLog[]
+  memberships   TenantMember[]
 
   @@map("users")
 }
@@ -109,4 +111,49 @@ model AuditLog {
   @@index([resource])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Global roles (platform-level, not tenant-scoped)
+// ---------------------------------------------------------------------------
+
+enum GlobalRole {
+  SUPER_ADMIN
+  MEMBER
+}
+
+// ---------------------------------------------------------------------------
+// Tenant + TenantMember
+// ---------------------------------------------------------------------------
+
+enum TenantRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members TenantMember[]
+
+  @@map("tenants")
+}
+
+model TenantMember {
+  id       String     @id @default(cuid())
+  userId   String
+  tenantId String
+  role     TenantRole @default(MEMBER)
+  joinedAt DateTime   @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+  @@map("tenant_members")
 }
