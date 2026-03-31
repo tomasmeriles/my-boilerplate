@@ -11,7 +11,15 @@ import { REDIS_CLIENT } from './redis.constants';
       provide: REDIS_CLIENT,
       inject: [ConfigService],
       useFactory: (config: ConfigService): Redis => {
-        return new Redis(config.get('REDIS_URL'));
+        return new Redis(config.get('REDIS_URL'), {
+          lazyConnect: true,
+          connectTimeout: 5_000,
+          commandTimeout: 5_000,
+          enableOfflineQueue: false,
+          maxRetriesPerRequest: null,
+          retryStrategy: (times) =>
+            times > 5 ? null : Math.min(times * 200, 2_000),
+        });
       },
     },
   ],

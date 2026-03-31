@@ -49,12 +49,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       const mapped = PRISMA_ERROR_MAP[exception.code];
       const status = mapped?.status ?? HttpStatus.INTERNAL_SERVER_ERROR;
-      const message = mapped?.message ?? 'Database error';
+      const message = mapped?.message ?? 'Internal server error';
       this.logger.warn(`Prisma [${exception.code}]: ${exception.message}`);
       res.status(status).json({
         statusCode: status,
         message,
-        error: exception.code,
+        error: mapped ? exception.code : 'Internal Server Error',
         requestId,
       });
       return;
@@ -65,7 +65,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       res.status(HttpStatus.BAD_REQUEST).json({
         statusCode: HttpStatus.BAD_REQUEST,
         message: 'Invalid query parameters',
-        error: 'PrismaValidationError',
+        error: 'Bad Request',
+        requestId,
+      });
+      return;
+    }
+
+    if (exception instanceof Prisma.PrismaClientUnknownRequestError) {
+      this.logger.error(`Prisma unknown request error: ${exception.message}`);
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error',
+        error: 'Internal Server Error',
         requestId,
       });
       return;
@@ -73,10 +84,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof Prisma.PrismaClientInitializationError) {
       this.logger.error(`Prisma init error: ${exception.message}`);
-      res.status(HttpStatus.SERVICE_UNAVAILABLE).json({
-        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
-        message: 'Database unavailable',
-        error: 'PrismaInitializationError',
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error',
+        error: 'Internal Server Error',
         requestId,
       });
       return;

@@ -93,11 +93,6 @@ export class AuthService {
   ): Promise<{ user: Omit<User, 'updatedAt'>; abilities: PackedAbility[] }> {
     let abilities = await this.abilityCache.get(user.id, tenantId);
 
-    this.logger.debug(
-      `Cache ${abilities ? 'hit' : 'miss'} for user ${user.id} tenant ${tenantId}`,
-      abilities,
-    );
-
     if (!abilities) {
       const userWithMemberships = await this.users.findWithMemberships(user.id);
       if (userWithMemberships) {
