@@ -9,5 +9,4 @@ export type { AuditHandlerMetadata };
 export const Audit = (
   action: AuditAction,
   resource: AuditResource,
-): MethodDecorator =>
-  SetMetadata(AUDIT_KEY, { action, resource }) as MethodDecorator;
+): MethodDecorator => SetMetadata(AUDIT_KEY, { action, resource });

@@ -23,9 +23,7 @@ import { UsersModule } from './modules/users/users.module';
       useFactory: (config: ConfigService) => ({
         pinoHttp: {
           genReqId: (req: IncomingMessage, res: ServerResponse) => {
-            const id =
-              (req.headers['x-request-id'] as string | undefined) ??
-              randomUUID();
+            const id = req.headers['x-request-id'] ?? randomUUID();
             res.setHeader('X-Request-ID', id);
             return id;
           },

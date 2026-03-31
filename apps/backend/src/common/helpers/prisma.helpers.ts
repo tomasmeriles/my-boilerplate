@@ -18,7 +18,7 @@ export function defined<T extends object>(
 /**
  * Builds a Prisma date range filter `{ gte, lte }`.
  * Returns `undefined` when both bounds are absent so the key
- * can be spread directly into a `where` object — Prisma ignores
+ * can be spread directly into a `where` object - Prisma ignores
  * `undefined` values.
  *
  * @example

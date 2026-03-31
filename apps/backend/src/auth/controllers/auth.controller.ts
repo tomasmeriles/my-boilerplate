@@ -9,6 +9,14 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import {
+  ApiCookieAuth,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuditAction, AuditResource, type User } from '@prisma/client';
 import type { Response } from 'express';
@@ -25,6 +33,7 @@ import { OAuthUser } from '../interfaces/oauth-user.interface';
 const ACCESS_COOKIE = 'access_token';
 const REFRESH_COOKIE = 'refresh_token';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -38,6 +47,7 @@ export class AuthController {
 
   /** Redirects the browser to Google's consent screen */
   @Get('google')
+  @ApiOperation({ summary: 'Initiate Google OAuth flow' })
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @UseGuards(GoogleOAuthGuard)
@@ -47,6 +57,7 @@ export class AuthController {
 
   /** Handles the OAuth callback, issues JWT pair, and sets cookies */
   @Get('google/callback')
+  @ApiOperation({ summary: 'Google OAuth callback - sets auth cookies' })
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @UseGuards(GoogleOAuthGuard)
@@ -72,6 +83,10 @@ export class AuthController {
 
   /** Issues a new access + refresh token pair using the refresh token cookie */
   @Post('refresh')
+  @ApiOperation({ summary: 'Rotate access + refresh token pair' })
+  @ApiCookieAuth('access_token')
+  @ApiNoContentResponse({ description: 'Tokens rotated - new cookies set' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid refresh token' })
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -101,6 +116,10 @@ export class AuthController {
 
   /** Returns the currently authenticated user (requires valid JWT cookie) */
   @Get('me')
+  @ApiOperation({ summary: 'Get current authenticated user' })
+  @ApiCookieAuth('access_token')
+  @ApiOkResponse({ description: 'Current user profile' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
   @UseGuards(JwtAuthGuard)
   getMe(@CurrentUser() user: User): Omit<User, 'updatedAt'> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -110,6 +129,9 @@ export class AuthController {
 
   /** Revokes the refresh token and clears both cookies */
   @Post('logout')
+  @ApiOperation({ summary: 'Revoke refresh token and clear auth cookies' })
+  @ApiCookieAuth('access_token')
+  @ApiNoContentResponse({ description: 'Session revoked' })
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
