@@ -9,6 +9,7 @@ export interface AuditHandlerMetadata {
 export interface RequestAuditContext {
   userId?: string | null;
   resourceId?: string | null;
+  requestId?: string;
   metadata?: Prisma.InputJsonValue;
 }
 

@@ -20,6 +20,7 @@ export interface CreateAuditLogInput {
   action: AuditAction;
   resource: AuditResource;
   resourceId?: string | null;
+  requestId?: string | null;
   success?: boolean;
   ip?: string | null;
   userAgent?: string | null;

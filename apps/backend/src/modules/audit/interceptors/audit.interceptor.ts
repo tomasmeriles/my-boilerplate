@@ -35,11 +35,13 @@ export class AuditInterceptor implements NestInterceptor {
 
     if (!meta) return next.handle();
 
-    const req = context
-      .switchToHttp()
-      .getRequest<
-        Request & { user?: { id?: string }; _audit?: RequestAuditContext }
-      >();
+    const req = context.switchToHttp().getRequest<
+      Request & {
+        id?: string;
+        user?: { id?: string };
+        _audit?: RequestAuditContext;
+      }
+    >();
 
     return next.handle().pipe(
       tap({
@@ -51,6 +53,7 @@ export class AuditInterceptor implements NestInterceptor {
               action: meta.action,
               resource: meta.resource,
               resourceId: req._audit?.resourceId ?? userId,
+              requestId: req._audit?.requestId ?? req.id,
               success: true,
               ip: this.extractIp(req),
               userAgent: req.headers['user-agent'],
@@ -68,6 +71,7 @@ export class AuditInterceptor implements NestInterceptor {
               action: meta.action,
               resource: meta.resource,
               resourceId: req._audit?.resourceId ?? userId,
+              requestId: req._audit?.requestId ?? req.id,
               success: false,
               ip: this.extractIp(req),
               userAgent: req.headers['user-agent'],
