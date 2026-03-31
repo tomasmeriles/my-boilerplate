@@ -9,6 +9,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuditAction, AuditResource, type User } from '@prisma/client';
 import type { Response } from 'express';
 import { ConfigService } from '../../config/services/config.service';
@@ -37,6 +38,8 @@ export class AuthController {
 
   /** Redirects the browser to Google's consent screen */
   @Get('google')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @UseGuards(GoogleOAuthGuard)
   googleLogin(): void {
     // Guard handles the redirect; this body never executes.
@@ -44,6 +47,8 @@ export class AuthController {
 
   /** Handles the OAuth callback, issues JWT pair, and sets cookies */
   @Get('google/callback')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @UseGuards(GoogleOAuthGuard)
   @Audit(AuditAction.LOGIN, AuditResource.USER)
   async googleCallback(
@@ -67,6 +72,8 @@ export class AuthController {
 
   /** Issues a new access + refresh token pair using the refresh token cookie */
   @Post('refresh')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
   @Audit(AuditAction.TOKEN_REFRESH, AuditResource.SESSION)
   async refresh(
@@ -103,6 +110,8 @@ export class AuthController {
 
   /** Revokes the refresh token and clears both cookies */
   @Post('logout')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
   @Audit(AuditAction.LOGOUT, AuditResource.SESSION)
   async logout(

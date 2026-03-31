@@ -23,6 +23,10 @@ export const configSchema = z.object({
   // Non-critical configs - these have defaults, so the app can start even if they're missing/invalid.
   // ---------------------------------------------------------------------------
   PORT: z.coerce.number().default(3000),
+
+  // Rate limiting (public endpoints)
+  THROTTLE_TTL_SECONDS: z.coerce.number().default(60),
+  THROTTLE_LIMIT: z.coerce.number().default(10),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

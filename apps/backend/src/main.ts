@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
@@ -8,7 +9,11 @@ import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.use(helmet());
+
   app.use(cookieParser());
+
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -16,8 +21,16 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
   app.useGlobalFilters(new PrismaExceptionFilter());
+
   const config = app.get(ConfigService);
+
+  app.enableCors({
+    origin: config.get('FRONTEND_URL'),
+    credentials: true,
+  });
+
   await app.listen(config.get('PORT'));
 }
 
