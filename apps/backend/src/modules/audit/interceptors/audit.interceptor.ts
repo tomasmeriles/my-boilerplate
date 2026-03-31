@@ -6,6 +6,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
 import { Observable, tap } from 'rxjs';
 import { AUDIT_KEY, AuditHandlerMetadata } from '../decorators/audit.decorator';
@@ -50,12 +51,30 @@ export class AuditInterceptor implements NestInterceptor {
               action: meta.action,
               resource: meta.resource,
               resourceId: req._audit?.resourceId ?? userId,
+              success: true,
               ip: this.extractIp(req),
               userAgent: req.headers['user-agent'],
               metadata: req._audit?.metadata,
             })
             .catch((err: unknown) => {
               this.logger.error('Failed to write audit log', err);
+            });
+        },
+        error: (err: unknown) => {
+          const userId = req._audit?.userId ?? req.user?.id ?? null;
+          void this.audit
+            .log({
+              userId,
+              action: meta.action,
+              resource: meta.resource,
+              resourceId: req._audit?.resourceId ?? userId,
+              success: false,
+              ip: this.extractIp(req),
+              userAgent: req.headers['user-agent'],
+              metadata: this.extractErrorMetadata(err),
+            })
+            .catch((auditErr: unknown) => {
+              this.logger.error('Failed to write failure audit log', auditErr);
             });
         },
       }),
@@ -69,5 +88,18 @@ export class AuditInterceptor implements NestInterceptor {
         ? forwarded.split(',')[0]?.trim()
         : undefined) ?? req.ip
     );
+  }
+
+  private extractErrorMetadata(err: unknown): Record<string, string> {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      return { errorCode: err.code, errorType: 'PrismaKnownRequestError' };
+    }
+    if (err instanceof Prisma.PrismaClientValidationError) {
+      return { errorType: 'PrismaValidationError' };
+    }
+    if (err instanceof Error) {
+      return { errorType: err.name, errorMessage: err.message };
+    }
+    return { errorType: 'UnknownError' };
   }
 }

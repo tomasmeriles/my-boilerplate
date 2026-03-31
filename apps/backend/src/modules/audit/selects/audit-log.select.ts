@@ -19,6 +19,7 @@ export const auditLogSelect = {
   action: true,
   resource: true,
   resourceId: true,
+  success: true,
   ip: true,
   userAgent: true,
   metadata: true,

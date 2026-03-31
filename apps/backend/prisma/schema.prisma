@@ -95,6 +95,7 @@ model AuditLog {
   action     AuditAction
   resource   AuditResource
   resourceId String?
+  success    Boolean       @default(true)
   ip         String?
   userAgent  String?
   metadata   Json?
