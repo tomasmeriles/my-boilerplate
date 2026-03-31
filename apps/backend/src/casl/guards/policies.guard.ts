@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
-import { CaslAbilityFactory } from '../casl-ability.factory';
+import { CaslAbilityFactory } from '../factories/casl-ability.factory';
 import { AbilityCacheService } from '../cache/ability-cache.service';
 import { UsersService } from '../../modules/users/services/users.service';
 import { CHECK_POLICIES_KEY } from '../decorators/check-policies.decorator';

@@ -26,8 +26,8 @@ import type { AuditableRequest } from '../../modules/audit/interceptors/audit.in
 import { AuthService } from '../services/auth.service';
 import { Cookie } from '../decorators/cookie.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
+import { Public } from '../decorators/public.decorator';
 import { GoogleOAuthGuard } from '../guards/google-oauth.guard';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { OAuthUser } from '../interfaces/oauth-user.interface';
 import type { PackedAbility } from '../../casl/interfaces/ability.interface';
 
@@ -46,6 +46,7 @@ export class AuthController {
   /** Redirects the browser to Google's consent screen */
   @Get('google')
   @ApiOperation({ summary: 'Initiate Google OAuth flow' })
+  @Public()
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @UseGuards(GoogleOAuthGuard)
@@ -56,6 +57,7 @@ export class AuthController {
   /** Handles the OAuth callback, issues JWT pair, and sets cookies */
   @Get('google/callback')
   @ApiOperation({ summary: 'Google OAuth callback - sets auth cookies' })
+  @Public()
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @UseGuards(GoogleOAuthGuard)
@@ -85,6 +87,7 @@ export class AuthController {
   @ApiCookieAuth('access_token')
   @ApiNoContentResponse({ description: 'Tokens rotated - new cookies set' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid refresh token' })
+  @Public()
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -122,7 +125,6 @@ export class AuthController {
   @ApiCookieAuth('access_token')
   @ApiOkResponse({ description: 'Current user profile with abilities' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
-  @UseGuards(JwtAuthGuard)
   getMe(
     @CurrentUser() user: User,
     @Headers('x-tenant-id') tenantId: string | undefined,

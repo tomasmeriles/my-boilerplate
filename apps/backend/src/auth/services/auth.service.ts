@@ -9,7 +9,7 @@ import { ConfigService } from '../../config/services/config.service';
 import { OAuthUser } from '../interfaces/oauth-user.interface';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { TokenPair } from '../interfaces/token-pair.interface';
-import { CaslAbilityFactory } from '../../casl/casl-ability.factory';
+import { CaslAbilityFactory } from '../../casl/factories/casl-ability.factory';
 import { AbilityCacheService } from '../../casl/cache/ability-cache.service';
 import type { PackedAbility } from '../../casl/interfaces/ability.interface';
 

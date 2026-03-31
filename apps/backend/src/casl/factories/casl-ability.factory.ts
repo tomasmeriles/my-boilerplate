@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { createMongoAbility, subject } from '@casl/ability';
 import { GlobalRole, TenantRole } from '@prisma/client';
-import type { AppAbility, PackedAbility } from './interfaces/ability.interface';
-import type { UserWithMemberships } from '../modules/users/interfaces/user.interface';
+import type {
+  AppAbility,
+  PackedAbility,
+} from '../interfaces/ability.interface';
+import type { UserWithMemberships } from '../../modules/users/interfaces/user.interface';
 
 @Injectable()
 export class CaslAbilityFactory {
