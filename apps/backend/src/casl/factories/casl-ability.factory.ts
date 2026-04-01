@@ -25,6 +25,23 @@ export class CaslAbilityFactory {
       return createMongoAbility<AppAbility>(rules);
     }
 
+    // TENANT_MANAGER can manage all tenants and their members, nothing else
+    if (user.globalRole === GlobalRole.TENANT_MANAGER) {
+      rules.push({ action: 'manage', subject: 'Tenant' });
+      rules.push({ action: 'manage', subject: 'TenantMember' });
+      rules.push({
+        action: 'read',
+        subject: 'User',
+        conditions: { id: user.id },
+      });
+      rules.push({
+        action: 'update',
+        subject: 'User',
+        conditions: { id: user.id },
+      });
+      return createMongoAbility<AppAbility>(rules);
+    }
+
     if (tenantId) {
       const membership = user.memberships.find((m) => m.tenantId === tenantId);
 

@@ -7,31 +7,36 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Represents a platform user. Auth is handled exclusively via OAuth (no passwords).
+/// globalRole controls platform-level access; tenant-level access is managed via TenantMember.
 model User {
   id         String     @id @default(cuid())
   email      String     @unique
   name       String?
   avatar     String?
-  globalRole GlobalRole @default(MEMBER)
+  globalRole GlobalRole @default(MEMBER) // SUPER_ADMIN = full platform access; MEMBER = normal user
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
   oauthAccounts OAuthAccount[]
   refreshTokens RefreshToken[]
   auditLogs     AuditLog[]
-  memberships   TenantMember[]
+  memberships   TenantMember[] // which tenants (e.g. ports) this user belongs to
 
   @@map("users")
 }
 
 // ---------------------------------------------------------------------------
-// OAuthAccount model
+// OAuth — external identity providers linked to a User
 // ---------------------------------------------------------------------------
 
+/// Supported OAuth providers. Extend here when adding new ones (e.g. MICROSOFT).
 enum OAuthProvider {
   GOOGLE
 }
 
+/// Stores the OAuth tokens and provider-specific account ID for a linked provider.
+/// A user may have multiple accounts (one per provider).
 model OAuthAccount {
   id                String        @id @default(cuid())
   userId            String
@@ -53,15 +58,18 @@ model OAuthAccount {
 }
 
 // ---------------------------------------------------------------------------
-// RefreshToken model
+// RefreshToken — rotating refresh token store (hashed, never stored raw)
 // ---------------------------------------------------------------------------
 
+/// Tracks issued refresh tokens using a hash (SHA-256) of the raw token.
+/// Supports token rotation: when a token is rotated, replacedBy records its successor.
+/// Revoked tokens remain in the table for audit purposes until cleanup.
 model RefreshToken {
   id         String    @id @default(cuid())
-  tokenHash  String    @unique
+  tokenHash  String    @unique // SHA-256 hash of the raw token
   userId     String
   expiresAt  DateTime
-  revokedAt  DateTime?
+  revokedAt  DateTime? // null = still valid
   replacedBy String? // tokenHash of the successor token (set on rotation)
   createdAt  DateTime  @default(now())
 
@@ -72,9 +80,10 @@ model RefreshToken {
 }
 
 // ---------------------------------------------------------------------------
-// AuditLog model
+// AuditLog — immutable event log for security-sensitive operations
 // ---------------------------------------------------------------------------
 
+/// Actions that can be recorded in the audit log.
 enum AuditAction {
   LOGIN
   LOGOUT
@@ -85,12 +94,15 @@ enum AuditAction {
   DELETE
 }
 
+/// Resources that audit events can target.
 enum AuditResource {
   USER
   SESSION
   OAUTH_ACCOUNT
 }
 
+/// Append-only log of security-relevant events. userId is nullable to capture
+/// failed/anonymous actions (e.g. failed login before the user is identified).
 model AuditLog {
   id         String        @id @default(cuid())
   userId     String?
@@ -114,24 +126,48 @@ model AuditLog {
 }
 
 // ---------------------------------------------------------------------------
-// Global roles (platform-level, not tenant-scoped)
+// Roles - two-tier RBAC model
+//
+// Tier 1 – GlobalRole: platform-wide, stored on User.
+//   SUPER_ADMIN     -> unrestricted access to everything (CASL: manage all)
+//   TENANT_MANAGER  -> can create, update, and delete any Tenant and its members,
+//                      but has no special access to other resources
+//   MEMBER          -> access determined entirely by TenantMember roles
+//
+// Tier 2 – TenantRole: scoped to a single Tenant, stored on TenantMember.
+//   OWNER  -> full control over the tenant and its members
+//   ADMIN  -> can manage members but cannot delete the tenant
+//   MEMBER -> read-only access to tenant data
 // ---------------------------------------------------------------------------
 
 enum GlobalRole {
   SUPER_ADMIN
+  TENANT_MANAGER
   MEMBER
 }
 
 // ---------------------------------------------------------------------------
-// Tenant + TenantMember
+// Tenant + TenantMember - multi-tenancy (infrastructure layer)
+//
+// A Tenant is the top-level isolation boundary.
+//
+// Domain-specific data should be stored in
+// a separate 1-to-1 profile model rather than here, so
+// this table stays generic and auth/permission code never needs to change.
+//
+// Future sub-resource permissions should follow the
+// same pattern: a ResourceMember join table with (userId, tenantId, resourceType,
+// resourceId, role) rather than nesting more columns here.
 // ---------------------------------------------------------------------------
 
 enum TenantRole {
-  OWNER
-  ADMIN
-  MEMBER
+  OWNER // full control: manage tenant settings, members, and sub-resources
+  ADMIN // manage members; cannot delete the tenant itself
+  MEMBER // read-only access to tenant data
 }
 
+// Top-level isolation unit. Represents an organization (e.g. a port authority).
+// Name is display-only; use a separate profile model for domain-specific fields.
 model Tenant {
   id        String   @id @default(cuid())
   name      String
@@ -143,6 +179,8 @@ model Tenant {
   @@map("tenants")
 }
 
+/// Join table between User and Tenant. One row = one membership with a specific role.
+/// A user can belong to multiple tenants simultaneously (different rows, different roles).
 model TenantMember {
   id       String     @id @default(cuid())
   userId   String
@@ -153,7 +191,7 @@ model TenantMember {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, tenantId])
+  @@unique([userId, tenantId]) // a user can only have one role per tenant
   @@index([tenantId])
   @@map("tenant_members")
 }
