@@ -2,11 +2,16 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import crypto from 'crypto';
 import { DateTime } from 'luxon';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TransactionHost } from '../../prisma/transaction-host.service';
+import { TransactionalService } from '../../common/base/transactional-service.base';
+import { Transactional } from '../../common/decorators/transactional.decorator';
 import { RefreshTokenWithUser } from '../interfaces/refresh-token.interface';
 
 @Injectable()
-export class RefreshTokensService {
-  constructor(private readonly prisma: PrismaService) {}
+export class RefreshTokensService extends TransactionalService {
+  constructor(prisma: PrismaService, txHost: TransactionHost) {
+    super(prisma, txHost);
+  }
 
   generate(): string {
     return crypto.randomBytes(64).toString('hex');
@@ -17,7 +22,7 @@ export class RefreshTokensService {
   }
 
   async store(token: string, userId: string, expiresAt: Date): Promise<void> {
-    await this.prisma.refreshToken.create({
+    await this.db.refreshToken.create({
       data: { tokenHash: this.hash(token), userId, expiresAt },
     });
   }
@@ -32,7 +37,7 @@ export class RefreshTokensService {
    */
   async consume(token: string): Promise<RefreshTokenWithUser> {
     const tokenHash = this.hash(token);
-    const record = await this.prisma.refreshToken.findUnique({
+    const record = await this.db.refreshToken.findUnique({
       where: { tokenHash },
       include: { user: true },
     });
@@ -62,6 +67,7 @@ export class RefreshTokensService {
   /**
    * Atomically revokes the old token (marking its successor) and stores the new one.
    */
+  @Transactional()
   async rotate(
     oldToken: string,
     newToken: string,
@@ -71,24 +77,22 @@ export class RefreshTokensService {
     const oldHash = this.hash(oldToken);
     const newHash = this.hash(newToken);
 
-    await this.prisma.$transaction([
-      this.prisma.refreshToken.update({
-        where: { tokenHash: oldHash },
-        data: { revokedAt: DateTime.utc().toJSDate(), replacedBy: newHash },
-      }),
-      this.prisma.refreshToken.create({
-        data: { tokenHash: newHash, userId, expiresAt },
-      }),
-    ]);
+    await this.db.refreshToken.update({
+      where: { tokenHash: oldHash },
+      data: { revokedAt: DateTime.utc().toJSDate(), replacedBy: newHash },
+    });
+    await this.db.refreshToken.create({
+      data: { tokenHash: newHash, userId, expiresAt },
+    });
   }
 
   async revoke(token: string): Promise<string | null> {
     const tokenHash = this.hash(token);
-    const record = await this.prisma.refreshToken.findUnique({
+    const record = await this.db.refreshToken.findUnique({
       where: { tokenHash },
       select: { userId: true },
     });
-    await this.prisma.refreshToken.updateMany({
+    await this.db.refreshToken.updateMany({
       where: { tokenHash, revokedAt: null },
       data: { revokedAt: DateTime.utc().toJSDate() },
     });
@@ -96,7 +100,7 @@ export class RefreshTokensService {
   }
 
   async revokeAllForUser(userId: string): Promise<void> {
-    await this.prisma.refreshToken.updateMany({
+    await this.db.refreshToken.updateMany({
       where: { userId, revokedAt: null },
       data: { revokedAt: DateTime.utc().toJSDate() },
     });

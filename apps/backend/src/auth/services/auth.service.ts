@@ -6,29 +6,38 @@ import type { CookieOptions } from 'express';
 import { UsersService } from '../../modules/users/services/users.service';
 import { RefreshTokensService } from './refresh-tokens.service';
 import { ConfigService } from '../../config/services/config.service';
-import { OAuthUser } from '../interfaces/oauth-user.interface';
+import type { OAuthUser } from '../interfaces/oauth-user.interface';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { TokenPair } from '../interfaces/token-pair.interface';
 import { CaslAbilityFactory } from '../../casl/factories/casl-ability.factory';
 import { AbilityCacheService } from '../../casl/cache/ability-cache.service';
 import type { PackedAbility } from '../../casl/interfaces/ability.interface';
+import { PrismaService } from '../../prisma/prisma.service';
+import { TransactionHost } from '../../prisma/transaction-host.service';
+import { TransactionalService } from '../../common/base/transactional-service.base';
+import { Transactional } from '../../common/decorators/transactional.decorator';
 
 @Injectable()
-export class AuthService {
+export class AuthService extends TransactionalService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
+    prisma: PrismaService,
+    txHost: TransactionHost,
     private readonly users: UsersService,
     private readonly refreshTokens: RefreshTokensService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly abilityFactory: CaslAbilityFactory,
     private readonly abilityCache: AbilityCacheService,
-  ) {}
+  ) {
+    super(prisma, txHost);
+  }
 
   /**
    * Upserts the user coming from an OAuth provider and issues a token pair.
    */
+  @Transactional()
   async handleOAuthLogin(
     oauthUser: OAuthUser,
   ): Promise<{ tokens: TokenPair; user: User }> {
