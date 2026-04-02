@@ -12,5 +12,13 @@ export default [
       },
     },
   },
+  {
+    files: ["prisma/**/*.js", "prisma/*.js"],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+      },
+    },
+  },
 ];
 
