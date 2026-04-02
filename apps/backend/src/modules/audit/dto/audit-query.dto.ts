@@ -3,7 +3,7 @@ import { IsDate, IsEnum, IsOptional, IsString } from 'class-validator';
 import { AuditAction, AuditResource } from '@prisma/client';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { WithSort } from '../../../common/dto/sort-query.dto';
-import { AUDIT_LOG_SORT_FIELDS } from '../selects/audit-log.select';
+import { AUDIT_LOG_SORT_FIELDS } from '../constants/audit-log.constants';
 
 export class AuditQueryDto extends WithSort(
   AUDIT_LOG_SORT_FIELDS,

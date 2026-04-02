@@ -1,13 +1,13 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { User } from '@prisma/client';
+import type { SafeUser } from '../../modules/users/selects/user.select';
 
 /**
  * Extracts the authenticated user from the request object.
- * Usage: @CurrentUser() user: User
+ * Usage: @CurrentUser() user: SafeUser
  */
 export const CurrentUser = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): User => {
-    const request = ctx.switchToHttp().getRequest<{ user: User }>();
+  (_data: unknown, ctx: ExecutionContext): SafeUser => {
+    const request = ctx.switchToHttp().getRequest<{ user: SafeUser }>();
     return request.user;
   },
 );

@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
 import { DateTime } from 'luxon';
 import type { CookieOptions } from 'express';
 import { UsersService } from '../../modules/users/services/users.service';
+import type { SafeUser } from '../../modules/users/selects/user.select';
 import { RefreshTokensService } from './refresh-tokens.service';
 import { ConfigService } from '../../config/services/config.service';
 import type { OAuthUser } from '../interfaces/oauth-user.interface';
@@ -40,7 +40,7 @@ export class AuthService extends TransactionalService {
   @Transactional()
   async handleOAuthLogin(
     oauthUser: OAuthUser,
-  ): Promise<{ tokens: TokenPair; user: User }> {
+  ): Promise<{ tokens: TokenPair; user: SafeUser }> {
     const user = await this.users.upsertOAuthUser(oauthUser);
     const tokens = await this.issueTokenPair(user);
     return { tokens, user };
@@ -97,9 +97,9 @@ export class AuthService extends TransactionalService {
    * Uses Redis cache; falls back to DB if not cached.
    */
   async getMe(
-    user: User,
+    user: SafeUser,
     tenantId: string | null,
-  ): Promise<{ user: Omit<User, 'updatedAt'>; abilities: PackedAbility[] }> {
+  ): Promise<{ user: SafeUser; abilities: PackedAbility[] }> {
     let abilities = await this.abilityCache.get(user.id, tenantId);
 
     if (!abilities) {
@@ -116,9 +116,7 @@ export class AuthService extends TransactionalService {
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { updatedAt: _omit, ...safeUser } = user;
-    return { user: safeUser, abilities };
+    return { user, abilities };
   }
 
   /** Cookie options for the access token */
@@ -152,7 +150,7 @@ export class AuthService extends TransactionalService {
   // Private helpers
   // ---------------------------------------------------------------------------
 
-  private async issueTokenPair(user: User): Promise<TokenPair> {
+  private async issueTokenPair(user: SafeUser): Promise<TokenPair> {
     const refreshToken = this.refreshTokens.generate();
     const expiresAt = this.refreshExpiresAt();
     await this.refreshTokens.store(refreshToken, user.id, expiresAt);
@@ -161,7 +159,7 @@ export class AuthService extends TransactionalService {
     return { accessToken, refreshToken, refreshMaxAge: this.refreshMaxAgeMs() };
   }
 
-  private signAccessToken(user: User): string {
+  private signAccessToken(user: SafeUser): string {
     const payload: JwtPayload = { sub: user.id, email: user.email };
     const minutes = this.config.get('JWT_ACCESS_EXPIRES_MINUTES');
     return this.jwt.sign(payload, { expiresIn: `${minutes}m` });

@@ -1,10 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { User } from '@prisma/client';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '../../config/services/config.service';
 import { UsersService } from '../../modules/users/services/users.service';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
+import type { SafeUser } from '../../modules/users/selects/user.select';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -23,7 +23,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<User> {
+  async validate(payload: JwtPayload): Promise<SafeUser> {
     const user = await this.users.findById(payload.sub);
     if (!user) {
       throw new UnauthorizedException('User not found');

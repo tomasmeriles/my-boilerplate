@@ -19,7 +19,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
-import { AuditAction, AuditResource, type User } from '@prisma/client';
+import { AuditAction, AuditResource } from '@prisma/client';
 import type { Response } from 'express';
 import { THROTTLE } from '../../common/constants/throttle.constants';
 import { Audit } from '../../modules/audit/decorators/audit.decorator';
@@ -31,6 +31,7 @@ import { Public } from '../decorators/public.decorator';
 import { GoogleOAuthGuard } from '../guards/google-oauth.guard';
 import { OAuthUser } from '../interfaces/oauth-user.interface';
 import type { PackedAbility } from '../../casl/interfaces/ability.interface';
+import type { SafeUser } from '../../modules/users/selects/user.select';
 
 const ACCESS_COOKIE = 'access_token';
 const REFRESH_COOKIE = 'refresh_token';
@@ -125,9 +126,9 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
   @SkipThrottle()
   getMe(
-    @CurrentUser() user: User,
+    @CurrentUser() user: SafeUser,
     @Headers('x-tenant-id') tenantId: string | undefined,
-  ): Promise<{ user: Omit<User, 'updatedAt'>; abilities: PackedAbility[] }> {
+  ): Promise<{ user: SafeUser; abilities: PackedAbility[] }> {
     return this.auth.getMe(user, tenantId ?? null);
   }
 

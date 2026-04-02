@@ -8,11 +8,8 @@ import {
   toOrderBy,
 } from '../../../common/helpers/prisma.helpers';
 import { AuditQueryDto } from '../dto/audit-query.dto';
-import {
-  auditLogDefaultOrderBy,
-  AuditLogPayload,
-  auditLogSelect,
-} from '../selects/audit-log.select';
+import { AuditLogPayload, auditLogSelect } from '../selects/audit-log.select';
+import { auditLogDefaultOrderBy } from '../constants/audit-log.constants';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { TransactionalService } from '../../../common/base/transactional-service.base';
 import { TransactionHost } from '../../../prisma/transaction-host.service';

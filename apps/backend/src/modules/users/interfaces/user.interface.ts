@@ -1,4 +1,5 @@
-import { OAuthProvider, type TenantMember, type User } from '@prisma/client';
+import { OAuthProvider, type TenantMember } from '@prisma/client';
+import type { SafeUser } from '../selects/user.select';
 
 export interface UpsertOAuthUserInput {
   email: string;
@@ -14,4 +15,4 @@ export interface UpsertOAuthUserInput {
   idToken?: string;
 }
 
-export type UserWithMemberships = User & { memberships: TenantMember[] };
+export type UserWithMemberships = SafeUser & { memberships: TenantMember[] };

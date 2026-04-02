@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { TransactionHost } from '../../../prisma/transaction-host.service';
 import { TransactionalService } from '../../../common/base/transactional-service.base';
 import { Transactional } from '../../../common/decorators/transactional.decorator';
-import type {
-  UpsertOAuthUserInput,
-  UserWithMemberships,
+import {
+  type UpsertOAuthUserInput,
+  type UserWithMemberships,
 } from '../interfaces/user.interface';
+import { userSelect, type SafeUser } from '../selects/user.select';
 import { defined } from '../../../common/helpers/prisma.helpers';
 
 @Injectable()
@@ -16,18 +16,18 @@ export class UsersService extends TransactionalService {
     super(prisma, txHost);
   }
 
-  findById(id: string): Promise<User | null> {
-    return this.db.user.findUnique({ where: { id } });
+  findById(id: string): Promise<SafeUser | null> {
+    return this.db.user.findUnique({ where: { id }, select: userSelect });
   }
 
-  findByEmail(email: string): Promise<User | null> {
-    return this.db.user.findUnique({ where: { email } });
+  findByEmail(email: string): Promise<SafeUser | null> {
+    return this.db.user.findUnique({ where: { email }, select: userSelect });
   }
 
   findWithMemberships(id: string): Promise<UserWithMemberships | null> {
     return this.db.user.findUnique({
       where: { id },
-      include: { memberships: true },
+      select: { ...userSelect, memberships: true },
     });
   }
 
@@ -37,7 +37,7 @@ export class UsersService extends TransactionalService {
    * If the OAuth account already exists, we refresh the stored tokens.
    */
   @Transactional()
-  async upsertOAuthUser(input: UpsertOAuthUserInput): Promise<User> {
+  async upsertOAuthUser(input: UpsertOAuthUserInput): Promise<SafeUser> {
     const {
       email,
       name,
@@ -59,6 +59,7 @@ export class UsersService extends TransactionalService {
         name,
         avatar,
       }),
+      select: userSelect,
     });
 
     const accountData = defined({
