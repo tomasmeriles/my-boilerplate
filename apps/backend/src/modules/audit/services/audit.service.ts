@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { AuditAction, AuditResource, Prisma } from '@prisma/client';
 import { Page } from '../../../common/interfaces/page.interface';
 import {
-  buildFindManyArgs,
   dateRange,
   defined,
+  paginate,
   toOrderBy,
 } from '../../../common/helpers/prisma.helpers';
 import { AuditQueryDto } from '../dto/audit-query.dto';
@@ -44,34 +44,25 @@ export class AuditService extends TransactionalService {
     await this.db.auditLog.create({ data: input });
   }
 
-  async findMany(query: AuditQueryDto): Promise<Page<AuditLogPayload>> {
-    const {
-      userId,
-      action,
-      resource,
-      from,
-      to,
-      page,
-      limit,
-      sortBy,
-      sortOrder,
-    } = query;
+  findMany(query: AuditQueryDto): Promise<Page<AuditLogPayload>> {
+    const { userId, action, resource, from, to, sortBy, sortOrder } = query;
 
-    const args = buildFindManyArgs({
-      select: auditLogSelect,
-      where: {
-        ...defined({ userId, action, resource }),
-        createdAt: dateRange(from, to),
-      },
-      orderBy: toOrderBy(sortBy, sortOrder, auditLogDefaultOrderBy),
-      pagination: query,
-    });
+    const where = {
+      ...defined({ userId, action, resource }),
+      createdAt: dateRange(from, to),
+    };
 
-    const [data, total] = await this.db.$transaction([
-      this.db.auditLog.findMany(args),
-      this.db.auditLog.count({ where: args.where }),
-    ]);
-
-    return { data, total, page, limit };
+    return paginate<AuditLogPayload>(
+      query,
+      () =>
+        this.db.auditLog.findMany({
+          select: auditLogSelect,
+          where,
+          orderBy: toOrderBy(sortBy, sortOrder, auditLogDefaultOrderBy),
+          skip: query.skip,
+          take: query.limit,
+        }),
+      () => this.db.auditLog.count({ where }),
+    );
   }
 }

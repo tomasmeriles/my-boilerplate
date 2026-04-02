@@ -1,4 +1,6 @@
 import { SortOrder } from '../dto/sort-query.dto';
+import type { PaginationQueryDto } from '../dto/pagination-query.dto';
+import type { Page } from '../interfaces/page.interface';
 
 /**
  * Useful for building Prisma `where` inputs without verbose
@@ -36,44 +38,6 @@ export function dateRange(
 }
 
 /**
- * Builds the full args object for a Prisma `findMany` call.
- * Pass the result directly; reuse `args.where` in the paired `count`.
- *
- * @example
- * const args = buildFindManyArgs({
- *   select: auditLogSelect,
- *   where: { ...defined({ userId }), createdAt: dateRange(from, to) },
- *   orderBy: auditLogDefaultOrderBy,
- *   pagination: query,
- * });
- * const [data, total] = await prisma.$transaction([
- *   prisma.auditLog.findMany(args),
- *   prisma.auditLog.count({ where: args.where }),
- * ]);
- */
-export function buildFindManyArgs<TSelect, TWhere, TOrderBy>(opts: {
-  select?: TSelect;
-  where?: TWhere;
-  orderBy?: TOrderBy | TOrderBy[];
-  pagination?: { skip: number; limit: number };
-}): {
-  select?: TSelect;
-  where?: TWhere;
-  orderBy?: TOrderBy | TOrderBy[];
-  skip: number | undefined;
-  take: number | undefined;
-} {
-  const { select, where, orderBy, pagination } = opts;
-  return {
-    select,
-    where,
-    orderBy,
-    skip: pagination?.skip,
-    take: pagination?.limit,
-  };
-}
-
-/**
  * Converts validated `sortBy` / `sortOrder` query params into a Prisma
  * `orderBy` array. Falls back to `defaultOrderBy` when `sortBy` is absent.
  *
@@ -87,4 +51,36 @@ export function toOrderBy<TOrderBy>(
 ): TOrderBy[] {
   if (!sortBy) return defaultOrderBy;
   return [{ [sortBy]: sortOrder ?? SortOrder.DESC }] as TOrderBy[];
+}
+
+/**
+ * Runs `findMany` and `count` in parallel and returns a typed `Page<T>`.
+ * The `where` clause is defined once by the caller and shared between both,
+ * so they can never get out of sync.
+ *
+ * @example
+ * return paginate(
+ *   query,
+ *   () => this.db.user.findMany({ where, skip: query.skip, take: query.limit }),
+ *   () => this.db.user.count({ where }),
+ * );
+ */
+export async function paginate<T>(
+  query: Pick<PaginationQueryDto, 'page' | 'limit'>,
+  findMany: () => Promise<T[]>,
+  count: () => Promise<number>,
+): Promise<Page<T>> {
+  const [data, total] = await Promise.all([findMany(), count()]);
+  const totalPages = Math.ceil(total / query.limit);
+  return {
+    data,
+    meta: {
+      total,
+      page: query.page,
+      limit: query.limit,
+      totalPages,
+      hasNext: query.page < totalPages,
+      hasPrev: query.page > 1,
+    },
+  };
 }

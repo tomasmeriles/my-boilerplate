@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { User } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { TransactionHost } from '../../../prisma/transaction-host.service';
 import { TransactionalService } from '../../../common/base/transactional-service.base';
@@ -8,6 +8,7 @@ import type {
   UpsertOAuthUserInput,
   UserWithMemberships,
 } from '../interfaces/user.interface';
+import { defined } from '../../../common/helpers/prisma.helpers';
 
 @Injectable()
 export class UsersService extends TransactionalService {
@@ -54,10 +55,19 @@ export class UsersService extends TransactionalService {
     const user = await this.db.user.upsert({
       where: { email },
       create: { email, name, avatar },
-      update: {
-        name: name ?? Prisma.skip,
-        avatar: avatar ?? Prisma.skip,
-      },
+      update: defined({
+        name,
+        avatar,
+      }),
+    });
+
+    const accountData = defined({
+      accessToken,
+      refreshToken,
+      expiresAt,
+      tokenType,
+      scope,
+      idToken,
     });
 
     await this.db.oAuthAccount.upsert({
@@ -66,21 +76,9 @@ export class UsersService extends TransactionalService {
         userId: user.id,
         provider,
         providerAccountId,
-        accessToken: accessToken ?? Prisma.skip,
-        refreshToken: refreshToken ?? Prisma.skip,
-        expiresAt: expiresAt ?? Prisma.skip,
-        tokenType: tokenType ?? Prisma.skip,
-        scope: scope ?? Prisma.skip,
-        idToken: idToken ?? Prisma.skip,
+        ...accountData,
       },
-      update: {
-        accessToken: accessToken ?? Prisma.skip,
-        refreshToken: refreshToken ?? Prisma.skip,
-        expiresAt: expiresAt ?? Prisma.skip,
-        tokenType: tokenType ?? Prisma.skip,
-        scope: scope ?? Prisma.skip,
-        idToken: idToken ?? Prisma.skip,
-      },
+      update: accountData,
     });
 
     return user;
