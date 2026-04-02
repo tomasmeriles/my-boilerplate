@@ -7,7 +7,7 @@ import type { MongoAbility, RawRuleOf } from '@casl/ability';
 export type Action = 'manage' | 'create' | 'read' | 'update' | 'delete';
 
 // ---------------------------------------------------------------------------
-// Subjects — string-based; Prisma models are interfaces, not classes
+// Subjects - string-based; Prisma models are interfaces, not classes
 // ---------------------------------------------------------------------------
 
 export type Subject = 'User' | 'Tenant' | 'TenantMember' | 'all';
@@ -25,7 +25,7 @@ export type AppAbility = MongoAbility<[Action, Subject]>;
 export type PackedAbility = RawRuleOf<AppAbility>;
 
 // ---------------------------------------------------------------------------
-// Policy handler — a function that checks a specific ability
+// Policy handler - a function that checks a specific ability
 // ---------------------------------------------------------------------------
 
 export type PolicyHandler = (ability: AppAbility) => boolean;

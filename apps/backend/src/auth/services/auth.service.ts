@@ -10,7 +10,7 @@ import type { OAuthUser } from '../interfaces/oauth-user.interface';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { TokenPair } from '../interfaces/token-pair.interface';
 import { CaslAbilityFactory } from '../../casl/factories/casl-ability.factory';
-import { AbilityCacheService } from '../../casl/cache/ability-cache.service';
+import { AbilityCacheService } from '../../casl/services/ability-cache.service';
 import type { PackedAbility } from '../../casl/interfaces/ability.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TransactionHost } from '../../prisma/transaction-host.service';

@@ -27,12 +27,9 @@ export const configSchema = z.object({
   // ---------------------------------------------------------------------------
   PORT: z.coerce.number().default(3000),
 
-  // Rate limiting (public endpoints)
+  // Rate limiting - fallback for endpoints without an explicit @Throttle() decorator
   THROTTLE_TTL_SECONDS: z.coerce.number().default(60),
-  THROTTLE_LIMIT: z.coerce.number().default(10),
-
-  // Ability cache TTL in seconds
-  ABILITY_CACHE_TTL_SECONDS: z.coerce.number().default(60),
+  THROTTLE_LIMIT: z.coerce.number().default(30),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

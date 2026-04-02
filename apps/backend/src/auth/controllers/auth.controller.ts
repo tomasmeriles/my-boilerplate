@@ -18,9 +18,10 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuditAction, AuditResource, type User } from '@prisma/client';
 import type { Response } from 'express';
+import { THROTTLE } from '../../common/constants/throttle.constants';
 import { Audit } from '../../modules/audit/decorators/audit.decorator';
 import type { AuditableRequest } from '../../modules/audit/interceptors/audit.interceptor';
 import { AuthService } from '../services/auth.service';
@@ -47,8 +48,7 @@ export class AuthController {
   @Get('google')
   @ApiOperation({ summary: 'Initiate Google OAuth flow' })
   @Public()
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Throttle({ default: THROTTLE.AUTH })
   @UseGuards(GoogleOAuthGuard)
   googleLogin(): void {
     // Guard handles the redirect; this body never executes.
@@ -58,8 +58,7 @@ export class AuthController {
   @Get('google/callback')
   @ApiOperation({ summary: 'Google OAuth callback - sets auth cookies' })
   @Public()
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Throttle({ default: THROTTLE.AUTH })
   @UseGuards(GoogleOAuthGuard)
   @Audit(AuditAction.LOGIN, AuditResource.USER)
   async googleCallback(
@@ -88,8 +87,7 @@ export class AuthController {
   @ApiNoContentResponse({ description: 'Tokens rotated - new cookies set' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid refresh token' })
   @Public()
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ default: THROTTLE.SENSITIVE })
   @HttpCode(HttpStatus.NO_CONTENT)
   @Audit(AuditAction.TOKEN_REFRESH, AuditResource.SESSION)
   async refresh(
@@ -125,6 +123,7 @@ export class AuthController {
   @ApiCookieAuth('access_token')
   @ApiOkResponse({ description: 'Current user profile with abilities' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
+  @SkipThrottle()
   getMe(
     @CurrentUser() user: User,
     @Headers('x-tenant-id') tenantId: string | undefined,
@@ -137,8 +136,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Revoke refresh token and clear auth cookies' })
   @ApiCookieAuth('access_token')
   @ApiNoContentResponse({ description: 'Session revoked' })
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @SkipThrottle()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Audit(AuditAction.LOGOUT, AuditResource.SESSION)
   async logout(

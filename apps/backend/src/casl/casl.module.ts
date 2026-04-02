@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CaslAbilityFactory } from './factories/casl-ability.factory';
-import { AbilityCacheService } from './cache/ability-cache.service';
+import { AbilityCacheService } from './services/ability-cache.service';
 import { PoliciesGuard } from './guards/policies.guard';
 import { RedisModule } from '../redis/redis.module';
 import { UsersModule } from '../modules/users/users.module';

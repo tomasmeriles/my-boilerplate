@@ -27,7 +27,7 @@ model User {
 }
 
 // ---------------------------------------------------------------------------
-// OAuth — external identity providers linked to a User
+// OAuth - external identity providers linked to a User
 // ---------------------------------------------------------------------------
 
 /// Supported OAuth providers. Extend here when adding new ones (e.g. MICROSOFT).
@@ -58,7 +58,7 @@ model OAuthAccount {
 }
 
 // ---------------------------------------------------------------------------
-// RefreshToken — rotating refresh token store (hashed, never stored raw)
+// RefreshToken - rotating refresh token store (hashed, never stored raw)
 // ---------------------------------------------------------------------------
 
 /// Tracks issued refresh tokens using a hash (SHA-256) of the raw token.
@@ -80,7 +80,7 @@ model RefreshToken {
 }
 
 // ---------------------------------------------------------------------------
-// AuditLog — immutable event log for security-sensitive operations
+// AuditLog - immutable event log for security-sensitive operations
 // ---------------------------------------------------------------------------
 
 /// Actions that can be recorded in the audit log.

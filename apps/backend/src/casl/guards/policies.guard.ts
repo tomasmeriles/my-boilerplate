@@ -8,7 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { CaslAbilityFactory } from '../factories/casl-ability.factory';
-import { AbilityCacheService } from '../cache/ability-cache.service';
+import { AbilityCacheService } from '../services/ability-cache.service';
 import { UsersService } from '../../modules/users/services/users.service';
 import { CHECK_POLICIES_KEY } from '../decorators/check-policies.decorator';
 import type { PolicyHandler } from '../interfaces/ability.interface';
@@ -31,7 +31,7 @@ export class PoliciesGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
-    // No @CheckPolicies decorator — allow through
+    // No @CheckPolicies decorator - allow through
     if (!handlers || handlers.length === 0) return true;
 
     const req = context

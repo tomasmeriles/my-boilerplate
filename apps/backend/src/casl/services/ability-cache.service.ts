@@ -2,19 +2,15 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
 import type { PackedAbility } from '../interfaces/ability.interface';
 import { REDIS_CLIENT } from '../../redis/redis.constants';
-import { ConfigService } from '../../config/services/config.service';
+
+/** Seconds before a cached ability set expires. */
+const ABILITY_CACHE_TTL_SECONDS = 60;
 
 @Injectable()
 export class AbilityCacheService {
   private readonly logger = new Logger(AbilityCacheService.name);
-  private readonly ttl: number;
 
-  constructor(
-    @Inject(REDIS_CLIENT) private readonly redis: Redis,
-    private readonly config: ConfigService,
-  ) {
-    this.ttl = this.config.get('ABILITY_CACHE_TTL_SECONDS');
-  }
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
 
   // Key format: abilities:{userId}:{tenantId|global}
   private key(userId: string, tenantId: string | null): string {
@@ -45,7 +41,7 @@ export class AbilityCacheService {
         this.key(userId, tenantId),
         JSON.stringify(rules),
         'EX',
-        this.ttl,
+        ABILITY_CACHE_TTL_SECONDS,
       );
     } catch (err) {
       this.logger.warn(`Redis SET failed: ${String(err)}`);

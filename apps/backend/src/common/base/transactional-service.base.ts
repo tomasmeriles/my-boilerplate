@@ -53,7 +53,7 @@ export abstract class TransactionalService {
 
   /**
    * Internal method used by the @Transactional() decorator.
-   * Not intended for direct use in subclasses — use withTransaction() instead.
+   * Not intended for direct use in subclasses - use withTransaction() instead.
    */
   async _transact<T>(
     fn: () => Promise<T>,
