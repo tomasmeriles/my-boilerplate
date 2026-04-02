@@ -14,6 +14,12 @@ import {
   auditLogSelect,
 } from '../selects/audit-log.select';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { TransactionalService } from '../../../common/base/transactional-service.base';
+import { TransactionHost } from '../../../prisma/transaction-host.service';
+import {
+  Propagation,
+  Transactional,
+} from '../../../common/decorators/transactional.decorator';
 
 export interface CreateAuditLogInput {
   userId?: string | null;
@@ -28,11 +34,14 @@ export interface CreateAuditLogInput {
 }
 
 @Injectable()
-export class AuditService {
-  constructor(private readonly prisma: PrismaService) {}
+export class AuditService extends TransactionalService {
+  constructor(prisma: PrismaService, txHost: TransactionHost) {
+    super(prisma, txHost);
+  }
 
+  @Transactional({ propagation: Propagation.REQUIRES_NEW })
   async log(input: CreateAuditLogInput): Promise<void> {
-    await this.prisma.auditLog.create({ data: input });
+    await this.db.auditLog.create({ data: input });
   }
 
   async findMany(query: AuditQueryDto): Promise<Page<AuditLogPayload>> {
@@ -58,9 +67,9 @@ export class AuditService {
       pagination: query,
     });
 
-    const [data, total] = await this.prisma.$transaction([
-      this.prisma.auditLog.findMany(args),
-      this.prisma.auditLog.count({ where: args.where }),
+    const [data, total] = await this.db.$transaction([
+      this.db.auditLog.findMany(args),
+      this.db.auditLog.count({ where: args.where }),
     ]);
 
     return { data, total, page, limit };
