@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import compression from 'compression';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { NestFactory } from '@nestjs/core';
@@ -17,6 +18,8 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   const config = app.get(ConfigService);
+
+  app.use(compression({ threshold: 1024 }));
 
   // In production, use Helmet's secure defaults (CSP enabled).
   // In development/test, disable CSP so Swagger UI (inline scripts/styles) works.
