@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { DateTime } from 'luxon';
 import type { CookieOptions } from 'express';
@@ -7,8 +7,10 @@ import type { SafeUser } from '../../modules/users/selects/user.select';
 import { RefreshTokensService } from './refresh-tokens.service';
 import { ConfigService } from '../../config/services/config.service';
 import type { OAuthUser } from '../interfaces/oauth-user.interface';
+import type { RegisterDto } from '../dto/register.dto';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { TokenPair } from '../interfaces/token-pair.interface';
+import { PasswordService } from './password.service';
 import { CaslAbilityFactory } from '../../casl/factories/casl-ability.factory';
 import { AbilityCacheService } from '../../casl/services/ability-cache.service';
 import type { PackedAbility } from '../../casl/interfaces/ability.interface';
@@ -30,6 +32,7 @@ export class AuthService extends TransactionalService {
     private readonly config: ConfigService,
     private readonly abilityFactory: CaslAbilityFactory,
     private readonly abilityCache: AbilityCacheService,
+    private readonly password: PasswordService,
   ) {
     super(prisma, txHost);
   }
@@ -47,8 +50,67 @@ export class AuthService extends TransactionalService {
   }
 
   /**
+   * Registers a new local user, hashes the password, and issues a token pair.
+   * Throws ConflictException if the email is already taken.
+   */
+  @Transactional()
+  async register(
+    dto: RegisterDto,
+  ): Promise<{ tokens: TokenPair; user: SafeUser }> {
+    const passwordHash = await this.password.hash(dto.password);
+    const user = await this.users.createLocalUser({
+      email: dto.email,
+      name: dto.name,
+      passwordHash,
+    });
+    const tokens = await this.issueTokenPair(user);
+    return { tokens, user };
+  }
+
+  /**
+   * Validates email + password credentials. Returns the SafeUser or null.
+   * Used by LocalStrategy.
+   */
+  async validateLocalUser(
+    email: string,
+    plain: string,
+  ): Promise<SafeUser | null> {
+    const user = await this.users.findByEmailWithPassword(email);
+    if (!user || !user.passwordHash) return null;
+
+    const valid = await this.password.verify(plain, user.passwordHash);
+
+    if (!valid) return null;
+
+    if (
+      this.config.get('EMAIL_VERIFICATION_REQUIRED') &&
+      !user.emailVerifiedAt
+    ) {
+      throw new ForbiddenException('Email not verified');
+    }
+
+    // Strip passwordHash before returning
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _ph, ...safeUser } = user;
+    return safeUser;
+  }
+
+  /**
+   * Issues a token pair for an already-validated local user (post-login).
+   */
+  @Transactional()
+  async loginWithPassword(
+    user: SafeUser,
+  ): Promise<{ tokens: TokenPair; user: SafeUser }> {
+    const tokens = await this.issueTokenPair(user);
+
+    return { tokens, user };
+  }
+
+  /**
    * Validates a refresh token, rotates it, and issues a new token pair.
    */
+  @Transactional()
   async refreshTokenPair(
     refreshToken: string,
   ): Promise<{ tokens: TokenPair; userId: string }> {
@@ -78,6 +140,7 @@ export class AuthService extends TransactionalService {
   /**
    * Revokes the given refresh token (logout) and returns the owner's userId.
    */
+  @Transactional()
   revokeRefreshToken(refreshToken: string): Promise<string | null> {
     return this.refreshTokens.revoke(refreshToken);
   }
@@ -85,6 +148,7 @@ export class AuthService extends TransactionalService {
   /**
    * Revokes the refresh token, invalidates the ability cache, and returns the userId.
    */
+  @Transactional()
   async logout(refreshToken: string | undefined): Promise<string | null> {
     if (!refreshToken) return null;
     const userId = await this.refreshTokens.revoke(refreshToken);

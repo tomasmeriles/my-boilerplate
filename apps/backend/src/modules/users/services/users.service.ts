@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { TransactionHost } from '../../../prisma/transaction-host.service';
 import { TransactionalService } from '../../../common/base/transactional-service.base';
@@ -6,6 +6,7 @@ import { Transactional } from '../../../common/decorators/transactional.decorato
 import {
   type UpsertOAuthUserInput,
   type UserWithMemberships,
+  type CreateLocalUserInput,
 } from '../interfaces/user.interface';
 import { userSelect, type SafeUser } from '../selects/user.select';
 import { defined } from '../../../common/helpers/prisma.helpers';
@@ -24,10 +25,42 @@ export class UsersService extends TransactionalService {
     return this.db.user.findUnique({ where: { email }, select: userSelect });
   }
 
+  findByEmailWithPassword(
+    email: string,
+  ): Promise<(SafeUser & { passwordHash: string | null }) | null> {
+    return this.db.user.findUnique({
+      where: { email },
+      select: { ...userSelect, passwordHash: true },
+    });
+  }
+
   findWithMemberships(id: string): Promise<UserWithMemberships | null> {
     return this.db.user.findUnique({
       where: { id },
       select: { ...userSelect, memberships: true },
+    });
+  }
+
+  /**
+   * Creates a new user with a hashed password (local auth).
+   * Throws ConflictException if the email already exists.
+   */
+  @Transactional()
+  async createLocalUser(input: CreateLocalUserInput): Promise<SafeUser> {
+    const existing = await this.db.user.findUnique({
+      where: { email: input.email },
+      select: { id: true },
+    });
+    if (existing) {
+      throw new ConflictException('Email already in use');
+    }
+    return this.db.user.create({
+      data: {
+        email: input.email,
+        name: input.name,
+        passwordHash: input.passwordHash,
+      },
+      select: userSelect,
     });
   }
 

@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Headers,
@@ -11,7 +12,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBody,
   ApiCookieAuth,
+  ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
@@ -29,7 +32,10 @@ import { Cookie } from '../decorators/cookie.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { Public } from '../decorators/public.decorator';
 import { GoogleOAuthGuard } from '../guards/google-oauth.guard';
+import { LocalAuthGuard } from '../guards/local-auth.guard';
 import { OAuthUser } from '../interfaces/oauth-user.interface';
+import { RegisterDto } from '../dto/register.dto';
+import { LoginDto } from '../dto/login.dto';
 import type { PackedAbility } from '../../casl/interfaces/ability.interface';
 import type { SafeUser } from '../../modules/users/selects/user.select';
 
@@ -40,6 +46,67 @@ const REFRESH_COOKIE = 'refresh_token';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
+
+  // -----------------------------------------------------------------------
+  // Local auth flow
+  // -----------------------------------------------------------------------
+
+  /** Registers a new user with email + password and issues a token pair */
+  @Post('register')
+  @ApiOperation({ summary: 'Register with email and password' })
+  @ApiBody({ type: RegisterDto })
+  @ApiCreatedResponse({ description: 'User created - auth cookies set' })
+  @Public()
+  @Throttle({ default: THROTTLE.AUTH })
+  @Audit(AuditAction.REGISTER, AuditResource.USER)
+  async register(
+    @Body() dto: RegisterDto,
+    @Req() req: AuditableRequest,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<SafeUser> {
+    const { tokens, user } = await this.auth.register(dto);
+    req._audit = { userId: user.id };
+    res.cookie(
+      ACCESS_COOKIE,
+      tokens.accessToken,
+      this.auth.accessCookieOptions(),
+    );
+    res.cookie(
+      REFRESH_COOKIE,
+      tokens.refreshToken,
+      this.auth.refreshCookieOptions(tokens.refreshMaxAge),
+    );
+    return user;
+  }
+
+  /** Authenticates an existing user with email + password and issues a token pair */
+  @Post('login')
+  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiBody({ type: LoginDto })
+  @ApiCreatedResponse({ description: 'Authenticated - auth cookies set' })
+  @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
+  @Public()
+  @UseGuards(LocalAuthGuard)
+  @Throttle({ default: THROTTLE.AUTH })
+  @Audit(AuditAction.LOGIN, AuditResource.USER)
+  async login(
+    @Req() req: AuditableRequest & { user: SafeUser },
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<SafeUser> {
+    const { tokens, user } = await this.auth.loginWithPassword(req.user);
+    req._audit = { userId: user.id, metadata: { provider: 'local' } };
+    res.cookie(
+      ACCESS_COOKIE,
+      tokens.accessToken,
+      this.auth.accessCookieOptions(),
+    );
+    res.cookie(
+      REFRESH_COOKIE,
+      tokens.refreshToken,
+      this.auth.refreshCookieOptions(tokens.refreshMaxAge),
+    );
+    return user;
+  }
 
   // -----------------------------------------------------------------------
   // Google OAuth flow

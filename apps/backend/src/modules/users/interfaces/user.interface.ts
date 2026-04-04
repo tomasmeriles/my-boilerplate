@@ -16,3 +16,9 @@ export interface UpsertOAuthUserInput {
 }
 
 export type UserWithMemberships = SafeUser & { memberships: TenantMember[] };
+
+export interface CreateLocalUserInput {
+  email: string;
+  name: string;
+  passwordHash: string;
+}

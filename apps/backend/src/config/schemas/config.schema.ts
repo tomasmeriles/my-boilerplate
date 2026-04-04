@@ -30,6 +30,12 @@ export const configSchema = z.object({
   // Rate limiting - fallback for endpoints without an explicit @Throttle() decorator
   THROTTLE_TTL_SECONDS: z.coerce.number().default(60),
   THROTTLE_LIMIT: z.coerce.number().default(30),
+
+  // Local auth - set to true to require email verification before login
+  EMAIL_VERIFICATION_REQUIRED: z
+    .string()
+    .transform((v) => v === 'true')
+    .default('false'),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;
