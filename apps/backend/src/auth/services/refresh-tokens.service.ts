@@ -1,18 +1,12 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import crypto from 'crypto';
 import { DateTime } from 'luxon';
-import { PrismaService } from '../../prisma/prisma.service';
-import { TransactionHost } from '../../prisma/transaction-host.service';
 import { TransactionalService } from '../../common/base/transactional-service.base';
 import { Transactional } from '../../common/decorators/transactional.decorator';
 import { RefreshTokenWithUser } from '../interfaces/refresh-token.interface';
 
 @Injectable()
 export class RefreshTokensService extends TransactionalService {
-  constructor(prisma: PrismaService, txHost: TransactionHost) {
-    super(prisma, txHost);
-  }
-
   generate(): string {
     return crypto.randomBytes(64).toString('hex');
   }

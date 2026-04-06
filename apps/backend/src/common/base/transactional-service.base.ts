@@ -1,8 +1,9 @@
-import { PrismaService } from '../../prisma/prisma.service';
+import { Inject } from '@nestjs/common';
+import { PrismaService } from '../../prisma/services/prisma.service';
 import {
   TransactionHost,
   type TxClient,
-} from '../../prisma/transaction-host.service';
+} from '../../prisma/services/transaction-host.service';
 import { Propagation } from '../decorators/transactional.decorator';
 
 export type { TxClient };
@@ -21,14 +22,15 @@ export type TxOptions = Parameters<PrismaService['$transaction']>[1];
  *  - `this.withTransaction()` is the programmatic equivalent for cases where a
  *    decorator is not practical (e.g. conditional transactions in loops).
  *
- * Subclasses must inject both `PrismaService` and `TransactionHost` and pass them
- * to `super()`.
+ * `PrismaService` and `TransactionHost` are injected automatically via property
+ * injection - subclasses do not need to declare them or call `super()`.
  */
 export abstract class TransactionalService {
-  constructor(
-    protected readonly prisma: PrismaService,
-    private readonly txHost: TransactionHost,
-  ) {}
+  @Inject(PrismaService)
+  protected readonly prisma!: PrismaService;
+
+  @Inject(TransactionHost)
+  private readonly txHost!: TransactionHost;
 
   /**
    * Returns the active transaction client for the current request context,

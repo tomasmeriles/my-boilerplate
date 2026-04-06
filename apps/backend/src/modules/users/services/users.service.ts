@@ -1,6 +1,4 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { TransactionHost } from '../../../prisma/transaction-host.service';
 import { TransactionalService } from '../../../common/base/transactional-service.base';
 import { Transactional } from '../../../common/decorators/transactional.decorator';
 import {
@@ -13,10 +11,6 @@ import { defined } from '../../../common/helpers/prisma.helpers';
 
 @Injectable()
 export class UsersService extends TransactionalService {
-  constructor(prisma: PrismaService, txHost: TransactionHost) {
-    super(prisma, txHost);
-  }
-
   findById(id: string): Promise<SafeUser | null> {
     return this.db.user.findUnique({ where: { id }, select: userSelect });
   }

@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-import { TransactionHost } from './transaction-host.service';
+import { PrismaService } from './services/prisma.service';
+import { TransactionHost } from './services/transaction-host.service';
 
 const providers = [PrismaService, TransactionHost];
 

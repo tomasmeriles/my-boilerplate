@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
 import type { PackedAbility } from '../interfaces/ability.interface';
-import { REDIS_CLIENT } from '../../redis/redis.constants';
+import { REDIS_CLIENT } from '../../redis/constants/redis.constants';
 
 /** Seconds before a cached ability set expires. */
 const ABILITY_CACHE_TTL_SECONDS = 60;

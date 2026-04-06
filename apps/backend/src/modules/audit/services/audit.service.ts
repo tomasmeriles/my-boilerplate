@@ -10,9 +10,7 @@ import {
 import { AuditQueryDto } from '../dto/audit-query.dto';
 import { AuditLogPayload, auditLogSelect } from '../selects/audit-log.select';
 import { auditLogDefaultOrderBy } from '../constants/audit-log.constants';
-import { PrismaService } from '../../../prisma/prisma.service';
 import { TransactionalService } from '../../../common/base/transactional-service.base';
-import { TransactionHost } from '../../../prisma/transaction-host.service';
 import {
   Propagation,
   Transactional,
@@ -32,10 +30,6 @@ export interface CreateAuditLogInput {
 
 @Injectable()
 export class AuditService extends TransactionalService {
-  constructor(prisma: PrismaService, txHost: TransactionHost) {
-    super(prisma, txHost);
-  }
-
   @Transactional({ propagation: Propagation.REQUIRES_NEW })
   async log(input: CreateAuditLogInput): Promise<void> {
     await this.db.auditLog.create({ data: input });

@@ -14,8 +14,6 @@ import { PasswordService } from './password.service';
 import { CaslAbilityFactory } from '../../casl/factories/casl-ability.factory';
 import { AbilityCacheService } from '../../casl/services/ability-cache.service';
 import type { PackedAbility } from '../../casl/interfaces/ability.interface';
-import { PrismaService } from '../../prisma/prisma.service';
-import { TransactionHost } from '../../prisma/transaction-host.service';
 import { TransactionalService } from '../../common/base/transactional-service.base';
 import { Transactional } from '../../common/decorators/transactional.decorator';
 
@@ -24,8 +22,6 @@ export class AuthService extends TransactionalService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    prisma: PrismaService,
-    txHost: TransactionHost,
     private readonly users: UsersService,
     private readonly refreshTokens: RefreshTokensService,
     private readonly jwt: JwtService,
@@ -34,7 +30,7 @@ export class AuthService extends TransactionalService {
     private readonly abilityCache: AbilityCacheService,
     private readonly password: PasswordService,
   ) {
-    super(prisma, txHost);
+    super();
   }
 
   /**
