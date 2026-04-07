@@ -14,6 +14,8 @@ import { AuditInterceptor } from './modules/audit/interceptors/audit.interceptor
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './modules/users/users.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { PoliciesGuard } from './casl/guards/policies.guard';
+import { CaslModule } from './casl/casl.module';
 
 @Module({
   imports: [
@@ -43,6 +45,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     UsersModule,
     AuditModule,
     AuthModule,
+    CaslModule,
     HealthModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
@@ -59,6 +62,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
   controllers: [],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: PoliciesGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
   ],

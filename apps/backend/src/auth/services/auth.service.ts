@@ -78,10 +78,7 @@ export class AuthService extends TransactionalService {
 
     if (!valid) return null;
 
-    if (
-      this.config.get('EMAIL_VERIFICATION_REQUIRED') &&
-      !user.emailVerifiedAt
-    ) {
+    if (!user.emailVerifiedAt) {
       throw new ForbiddenException('Email not verified');
     }
 

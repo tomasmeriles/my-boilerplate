@@ -81,7 +81,7 @@ export class UsersService extends TransactionalService {
 
     const user = await this.db.user.upsert({
       where: { email },
-      create: { email, name, avatar },
+      create: { email, name, avatar, emailVerifiedAt: new Date() },
       update: defined({
         name,
         avatar,

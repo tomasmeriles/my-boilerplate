@@ -10,7 +10,7 @@ export type Action = 'manage' | 'create' | 'read' | 'update' | 'delete';
 // Subjects - string-based; Prisma models are interfaces, not classes
 // ---------------------------------------------------------------------------
 
-export type Subject = 'User' | 'Tenant' | 'TenantMember' | 'all';
+export type Subject = 'User' | 'Tenant' | 'TenantMember' | 'AuditLog' | 'all';
 
 // ---------------------------------------------------------------------------
 // AppAbility

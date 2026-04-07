@@ -3,7 +3,7 @@ import Redis from 'ioredis';
 import { ConfigModule } from '../config/config.module';
 import { ConfigService } from '../config/services/config.service';
 import { REDIS_CLIENT } from './constants/redis.constants';
-import { RedisLifecycleService } from './redis-lifecycle.service';
+import { RedisLifecycleService } from './services/redis-lifecycle.service';
 
 @Module({
   imports: [ConfigModule],

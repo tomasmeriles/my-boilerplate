@@ -3,6 +3,7 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -14,10 +15,12 @@ import { CHECK_POLICIES_KEY } from '../decorators/check-policies.decorator';
 import type { PolicyHandler } from '../interfaces/ability.interface';
 import { createMongoAbility } from '@casl/ability';
 import type { AppAbility } from '../interfaces/ability.interface';
-import type { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
+import type { SafeUser } from '../../modules/users/selects/user.select';
 
 @Injectable()
 export class PoliciesGuard implements CanActivate {
+  private readonly logger = new Logger(PoliciesGuard.name);
+
   constructor(
     private readonly reflector: Reflector,
     private readonly abilityFactory: CaslAbilityFactory,
@@ -36,15 +39,19 @@ export class PoliciesGuard implements CanActivate {
 
     const req = context
       .switchToHttp()
-      .getRequest<Request & { user?: JwtPayload }>();
-    const userId = req.user?.sub;
+      .getRequest<Request & { user?: SafeUser }>();
+    const userId = req.user?.id;
 
-    if (!userId) throw new UnauthorizedException();
+    if (!userId) {
+      throw new UnauthorizedException();
+    }
 
     const tenantId = this.extractTenantId(req);
+
     const ability = await this.resolveAbility(userId, tenantId);
 
     const allowed = handlers.every((handler) => handler(ability));
+
     if (!allowed) throw new ForbiddenException();
 
     return true;
@@ -67,7 +74,9 @@ export class PoliciesGuard implements CanActivate {
 
     // 2. Build from DB
     const user = await this.users.findWithMemberships(userId);
-    if (!user) throw new UnauthorizedException();
+    if (!user) {
+      throw new UnauthorizedException();
+    }
 
     const ability = this.abilityFactory.buildAbilities(user, tenantId);
 
