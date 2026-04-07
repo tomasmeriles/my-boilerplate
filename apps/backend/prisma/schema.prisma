@@ -16,7 +16,7 @@ model User {
   avatar          String?
   passwordHash    String? // null for OAuth-only accounts
   emailVerifiedAt DateTime? // null = unverified
-  globalRole      GlobalRole @default(MEMBER) // SUPER_ADMIN = full platform access; MEMBER = normal user
+  globalRole      GlobalRole @default(MEMBER)
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
