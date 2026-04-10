@@ -30,6 +30,11 @@ export const configSchema = z.object({
   // Rate limiting - fallback for endpoints without an explicit @Throttle() decorator
   THROTTLE_TTL_SECONDS: z.coerce.number().default(60),
   THROTTLE_LIMIT: z.coerce.number().default(30),
+
+  // Logging
+  LOG_LEVEL: z
+    .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+    .default('info'),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

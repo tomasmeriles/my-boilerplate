@@ -16,6 +16,7 @@ import { UsersModule } from './modules/users/users.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { PoliciesGuard } from './casl/guards/policies.guard';
 import { CaslModule } from './casl/casl.module';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
@@ -33,11 +34,7 @@ import { CaslModule } from './casl/casl.module';
           transport: config.isDevelopment
             ? { target: 'pino-pretty', options: { singleLine: true } }
             : undefined,
-          level: config.isTest
-            ? 'silent'
-            : config.isDevelopment
-              ? 'debug'
-              : 'info',
+          level: config.get('LOG_LEVEL'),
         },
       }),
     }),
@@ -46,6 +43,7 @@ import { CaslModule } from './casl/casl.module';
     AuditModule,
     AuthModule,
     CaslModule,
+    QueueModule,
     HealthModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
