@@ -1,0 +1,45 @@
+opencollection: 1.0.0
+
+info:
+  name: audit
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  auth:
+    type: oauth2
+    flow: authorization_code
+    authorizationUrl: https://accounts.google.com/o/oauth2/v2/auth
+    accessTokenUrl: https://accounts.google.com/o/oauth2/v2/auth
+    refreshTokenUrl: "{{baseUrl}}/auth/refresh"
+    callbackUrl: https://oauth.usebruno.com/callback
+    credentials:
+      clientId: "{{clientId}}"
+      clientSecret: "{{clientSecret}}"
+      placement: body
+    scope: openid email profile
+    pkce:
+      disabled: true
+    tokenConfig:
+      id: credentials
+      placement:
+        header: Bearer
+      source: id_token
+    settings:
+      autoFetchToken: true
+      autoRefreshToken: false
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

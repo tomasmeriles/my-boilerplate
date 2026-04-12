@@ -1,0 +1,22 @@
+info:
+  name: createUser
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: '{{baseUrl}}/auth/register'
+  body:
+    type: json
+    data: |-
+      {
+        "email": {{email}},
+        "password": {{password}},
+        "name": "Test Name"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

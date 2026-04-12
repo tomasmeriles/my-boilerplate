@@ -1,0 +1,6 @@
+name: development
+variables:
+  - secret: true
+    name: email
+  - secret: true
+    name: password

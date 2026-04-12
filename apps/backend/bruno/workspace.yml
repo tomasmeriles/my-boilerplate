@@ -1,0 +1,18 @@
+opencollection: 1.0.0
+info:
+  name: 'Boilerplate'
+  type: workspace
+
+collections:
+  - name: 'auth'
+    path: 'collections/auth'
+  - name: 'audit'
+    path: 'collections/audit'
+  - name: 'health'
+    path: 'collections/health'
+
+specs:
+
+docs: ''
+
+activeEnvironmentUid: 1whnjcd00000000000000
