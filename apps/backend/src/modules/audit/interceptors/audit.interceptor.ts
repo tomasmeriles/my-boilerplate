@@ -60,10 +60,16 @@ export class AuditInterceptor implements NestInterceptor {
               metadata: req._audit?.metadata,
             })
             .catch((err: unknown) => {
-              this.logger.error('Failed to write audit log', err);
+              this.logger.error(
+                `Failed to write audit log: ${
+                  err instanceof Error ? err.message : String(err)
+                }`,
+                err instanceof Error ? err.stack : undefined,
+              );
             });
         },
         error: (err: unknown) => {
+          if (req._audit?.skipAuditOnError) return;
           const userId = req._audit?.userId ?? req.user?.id ?? null;
           void this.audit
             .log({
@@ -78,7 +84,14 @@ export class AuditInterceptor implements NestInterceptor {
               metadata: this.extractErrorMetadata(err),
             })
             .catch((auditErr: unknown) => {
-              this.logger.error('Failed to write failure audit log', auditErr);
+              this.logger.error(
+                `Failed to write failure audit log: ${
+                  auditErr instanceof Error
+                    ? auditErr.message
+                    : String(auditErr)
+                }`,
+                auditErr instanceof Error ? auditErr.stack : undefined,
+              );
             });
         },
       }),

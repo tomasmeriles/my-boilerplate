@@ -20,13 +20,12 @@ import {
 import { usePagination } from '~/hooks/use-pagination';
 import { useAuditLogs } from '~/hooks/api/use-audit';
 import type { AuditAction, AuditQueryParams } from '~/api/audit/audit.types';
-import { formatDate, formatDateTime } from '~/lib/datetime';
+import { formatDateTime } from '~/lib/datetime';
 
 const ACTION_OPTIONS: AuditAction[] = [
   'LOGIN',
   'LOGOUT',
   'REGISTER',
-  'TOKEN_REFRESH',
   'TOKEN_REVOKED',
   'UPDATE',
   'DELETE',
@@ -42,7 +41,6 @@ function AuditLogsTable() {
   const pagination = usePagination(data?.meta.total ?? 0, 20);
 
   const { data: logs, meta } = data ?? {};
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -125,7 +123,7 @@ function AuditLogsTable() {
                   {log.ip ?? '—'}
                 </TableCell>
                 <TableCell className="text-muted-foreground text-sm">
-                  {formatDateTime(log.createdAt)}
+                  {formatDateTime(log.createdAt, 'yyyy-MM-dd HH:mm:ss.SSS')}
                 </TableCell>
               </TableRow>
             ))}

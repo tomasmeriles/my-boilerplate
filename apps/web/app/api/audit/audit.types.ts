@@ -3,7 +3,6 @@ import type { PaginationQuery, SortOrder } from '~/lib/types';
 export type AuditAction =
   | 'LOGIN'
   | 'LOGOUT'
-  | 'TOKEN_REFRESH'
   | 'TOKEN_REVOKED'
   | 'REGISTER'
   | 'UPDATE'

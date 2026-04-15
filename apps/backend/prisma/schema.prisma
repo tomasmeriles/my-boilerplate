@@ -89,7 +89,6 @@ model RefreshToken {
 enum AuditAction {
   LOGIN
   LOGOUT
-  TOKEN_REFRESH
   TOKEN_REVOKED
   REGISTER
   UPDATE

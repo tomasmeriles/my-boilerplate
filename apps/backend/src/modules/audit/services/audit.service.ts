@@ -11,10 +11,6 @@ import { AuditQueryDto } from '../dto/audit-query.dto';
 import { AuditLogPayload, auditLogSelect } from '../selects/audit-log.select';
 import { auditLogDefaultOrderBy } from '../constants/audit-log.constants';
 import { TransactionalService } from '../../../common/base/transactional-service.base';
-import {
-  Propagation,
-  Transactional,
-} from '../../../common/decorators/transactional.decorator';
 
 export interface CreateAuditLogInput {
   userId?: string | null;
@@ -30,9 +26,8 @@ export interface CreateAuditLogInput {
 
 @Injectable()
 export class AuditService extends TransactionalService {
-  @Transactional({ propagation: Propagation.REQUIRES_NEW })
   async log(input: CreateAuditLogInput): Promise<void> {
-    await this.db.auditLog.create({ data: input });
+    await this.db.auditLog.create({ data: defined(input) });
   }
 
   findMany(query: AuditQueryDto): Promise<Page<AuditLogPayload>> {
