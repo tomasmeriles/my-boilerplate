@@ -1,3 +1,4 @@
+import React from 'react';
 import { useLocation } from '@tanstack/react-router';
 import {
   Breadcrumb,
@@ -32,18 +33,18 @@ export function AppHeader() {
       <Breadcrumb>
         <BreadcrumbList>
           {crumbs.map((crumb, i) => (
-            <BreadcrumbItem key={crumb.href}>
-              {crumb.isLast ? (
-                <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-              ) : (
-                <>
+            <React.Fragment key={crumb.href}>
+              <BreadcrumbItem>
+                {crumb.isLast ? (
+                  <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                ) : (
                   <BreadcrumbLink href={crumb.href}>
                     {crumb.label}
                   </BreadcrumbLink>
-                  {i < crumbs.length - 1 && <BreadcrumbSeparator />}
-                </>
-              )}
-            </BreadcrumbItem>
+                )}
+              </BreadcrumbItem>
+              {!crumb.isLast && <BreadcrumbSeparator />}
+            </React.Fragment>
           ))}
         </BreadcrumbList>
       </Breadcrumb>
