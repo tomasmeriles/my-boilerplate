@@ -1,4 +1,5 @@
 import { useAuth } from '~/contexts/auth';
+import { formatDate } from '~/lib/datetime';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Badge } from '~/components/ui/badge';
 
@@ -39,8 +40,7 @@ export default function DashboardPage() {
           <CardContent>
             <p className="text-2xl font-bold">{user?.email}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Joined{' '}
-              {user ? new Date(user.createdAt).toLocaleDateString() : '—'}
+              Joined {user ? formatDate(user.createdAt) : '—'}
             </p>
           </CardContent>
         </Card>

@@ -6,6 +6,7 @@ import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Skeleton } from '~/components/ui/skeleton';
 import { useUser } from '~/hooks/api/use-users';
+import { formatDate } from '~/lib/datetime';
 
 export default function UserDetailPage() {
   const { id } = useParams({ strict: false });
@@ -66,14 +67,12 @@ export default function UserDetailPage() {
           <div className="flex justify-between">
             <span className="text-muted-foreground">Email verified</span>
             <span>
-              {user.emailVerifiedAt
-                ? new Date(user.emailVerifiedAt).toLocaleDateString()
-                : 'No'}
+              {user.emailVerifiedAt ? formatDate(user.emailVerifiedAt) : 'No'}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Joined</span>
-            <span>{new Date(user.createdAt).toLocaleDateString()}</span>
+            <span>{formatDate(user.createdAt)}</span>
           </div>
         </CardContent>
       </Card>

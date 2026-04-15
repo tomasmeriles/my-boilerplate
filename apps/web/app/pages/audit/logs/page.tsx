@@ -20,6 +20,7 @@ import {
 import { usePagination } from '~/hooks/use-pagination';
 import { useAuditLogs } from '~/hooks/api/use-audit';
 import type { AuditAction, AuditQueryParams } from '~/api/audit/audit.types';
+import { formatDate, formatDateTime } from '~/lib/datetime';
 
 const ACTION_OPTIONS: AuditAction[] = [
   'LOGIN',
@@ -124,7 +125,7 @@ function AuditLogsTable() {
                   {log.ip ?? '—'}
                 </TableCell>
                 <TableCell className="text-muted-foreground text-sm">
-                  {new Date(log.createdAt).toLocaleString()}
+                  {formatDateTime(log.createdAt)}
                 </TableCell>
               </TableRow>
             ))}

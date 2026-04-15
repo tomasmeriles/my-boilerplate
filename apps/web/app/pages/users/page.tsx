@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatDate } from '~/lib/datetime';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
@@ -104,7 +105,7 @@ function UsersTable() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {new Date(user.createdAt).toLocaleDateString()}
+                  {formatDate(user.createdAt)}
                 </TableCell>
               </TableRow>
             ))}
