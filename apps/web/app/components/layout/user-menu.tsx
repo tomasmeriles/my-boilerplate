@@ -1,4 +1,3 @@
-import { useNavigate } from '@tanstack/react-router';
 import { LogOut, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
@@ -20,14 +19,12 @@ function getInitials(name: string | null, email: string): string {
 
 export function UserMenu() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const { mutate: logout, isPending } = useLogout();
 
   if (!user) return null;
 
   const handleLogout = () => {
     logout(undefined, {
-      onSuccess: () => navigate({ to: '/login', replace: true }),
       onError: () => toast.error('Failed to sign out. Please try again.'),
     });
   };

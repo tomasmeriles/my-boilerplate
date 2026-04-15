@@ -36,12 +36,7 @@ apiClient.interceptors.request.use((config) => {
 
 // ─── Response interceptor: 401 -> refresh -> retry ────────────────────────────
 
-const SKIP_REFRESH = [
-  '/auth/refresh',
-  '/auth/login',
-  '/auth/register',
-  '/auth/me',
-];
+const SKIP_REFRESH = ['/auth/refresh', '/auth/login', '/auth/register'];
 
 apiClient.interceptors.response.use(
   (res) => res,
