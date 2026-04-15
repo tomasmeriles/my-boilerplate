@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { TransactionalService } from '../../../common/base/transactional-service.base';
 import { Transactional } from '../../../common/decorators/transactional.decorator';
 import {
@@ -7,7 +11,16 @@ import {
   type CreateLocalUserInput,
 } from '../interfaces/user.interface';
 import { userSelect, type SafeUser } from '../selects/user.select';
-import { defined } from '../../../common/helpers/prisma.helpers';
+import {
+  buildSearch,
+  defined,
+  paginate,
+  toOrderBy,
+} from '../../../common/helpers/prisma.helpers';
+import type { Page } from '../../../common/interfaces/page.interface';
+import type { UsersQueryDto } from '../dto/users-query.dto';
+import type { UpdateUserDto } from '../dto/update-user.dto';
+import { userDefaultOrderBy } from '../constants/user.constants';
 
 @Injectable()
 export class UsersService extends TransactionalService {
@@ -33,6 +46,45 @@ export class UsersService extends TransactionalService {
       where: { id },
       select: { ...userSelect, memberships: true },
     });
+  }
+
+  findMany(query: UsersQueryDto): Promise<Page<SafeUser>> {
+    const { search, sortBy, sortOrder } = query;
+
+    const where = buildSearch(search, ['name', 'email']);
+
+    return paginate<SafeUser>(
+      query,
+      () =>
+        this.db.user.findMany({
+          select: userSelect,
+          where,
+          orderBy: toOrderBy(sortBy, sortOrder, userDefaultOrderBy),
+          skip: query.skip,
+          take: query.limit,
+        }),
+      () => this.db.user.count({ where }),
+    );
+  }
+
+  async findByIdOrFail(id: string): Promise<SafeUser> {
+    const user = await this.findById(id);
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
+  @Transactional()
+  updateUser(id: string, dto: UpdateUserDto): Promise<SafeUser> {
+    return this.db.user.update({
+      where: { id },
+      data: defined(dto),
+      select: userSelect,
+    });
+  }
+
+  @Transactional()
+  async deleteUser(id: string): Promise<void> {
+    await this.db.user.delete({ where: { id } });
   }
 
   /**

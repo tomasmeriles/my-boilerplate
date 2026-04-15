@@ -18,6 +18,30 @@ export function defined<T extends object>(
 }
 
 /**
+ * Builds a Prisma `OR` full-text search filter across multiple string fields.
+ * Returns `undefined` when `term` is absent so it spreads safely alongside
+ * `defined()` — both treat `undefined` the same way.
+ *
+ * @example — search only
+ * const where = buildSearch(search, ['name', 'email']);
+ *
+ * @example — combined with exact filters
+ * const where = { ...defined({ globalRole }), ...buildSearch(search, ['name', 'email']) };
+ * // Returns {} when no term, so it spreads safely without filtering.
+ */
+export function buildSearch<TField extends string>(
+  term: string | undefined,
+  fields: readonly TField[],
+): { OR?: { [K in TField]?: { contains: string; mode: 'insensitive' } }[] } {
+  if (!term) return {};
+  return {
+    OR: fields.map((field) => ({
+      [field]: { contains: term, mode: 'insensitive' as const },
+    })) as { [K in TField]?: { contains: string; mode: 'insensitive' } }[],
+  };
+}
+
+/**
  * Builds a Prisma date range filter `{ gte, lte }`.
  * Returns `undefined` when both bounds are absent so the key
  * can be spread directly into a `where` object - Prisma ignores
