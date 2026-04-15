@@ -50,7 +50,7 @@ export class PoliciesGuard implements CanActivate {
 
     const ability = await this.resolveAbility(userId, tenantId);
 
-    const allowed = handlers.every((handler) => handler(ability));
+    const allowed = handlers.every((handler) => handler(ability, req));
 
     if (!allowed) throw new ForbiddenException();
 

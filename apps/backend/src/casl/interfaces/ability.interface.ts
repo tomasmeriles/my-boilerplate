@@ -1,4 +1,5 @@
-import type { MongoAbility, RawRuleOf } from '@casl/ability';
+import type { MongoAbility, RawRuleOf, ForcedSubject } from '@casl/ability';
+import type { Request } from 'express';
 
 // ---------------------------------------------------------------------------
 // Actions
@@ -7,10 +8,13 @@ import type { MongoAbility, RawRuleOf } from '@casl/ability';
 export type Action = 'manage' | 'create' | 'read' | 'update' | 'delete';
 
 // ---------------------------------------------------------------------------
-// Subjects - string-based; Prisma models are interfaces, not classes
+// Subjects - string-based; Prisma models are interfaces, not classes.
+// Including ForcedSubject<SubjectStr> lets tagged objects from subject()
+// be assignable to Subject without "as unknown as Subject" casts.
 // ---------------------------------------------------------------------------
 
-export type Subject = 'User' | 'Tenant' | 'TenantMember' | 'AuditLog' | 'all';
+type SubjectStr = 'User' | 'Tenant' | 'TenantMember' | 'AuditLog';
+export type Subject = SubjectStr | ForcedSubject<SubjectStr> | 'all';
 
 // ---------------------------------------------------------------------------
 // AppAbility
@@ -25,7 +29,8 @@ export type AppAbility = MongoAbility<[Action, Subject]>;
 export type PackedAbility = RawRuleOf<AppAbility>;
 
 // ---------------------------------------------------------------------------
-// Policy handler - a function that checks a specific ability
+// Policy handler - a function that receives the built ability and the raw
+// HTTP request, so handlers can check conditions against route params.
 // ---------------------------------------------------------------------------
 
-export type PolicyHandler = (ability: AppAbility) => boolean;
+export type PolicyHandler = (ability: AppAbility, req: Request) => boolean;
