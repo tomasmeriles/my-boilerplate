@@ -29,7 +29,7 @@ const navItems: NavItem[] = [
     title: 'Users',
     href: '/users',
     icon: Users,
-    ability: { action: 'read', subject: 'User' },
+    ability: { action: 'manage', subject: 'User' },
   },
   {
     title: 'Audit Logs',
