@@ -33,4 +33,5 @@ export interface AuditQueryParams extends PaginationQuery {
   resource?: AuditResource;
   from?: string;
   to?: string;
+  timezone?: string;
 }

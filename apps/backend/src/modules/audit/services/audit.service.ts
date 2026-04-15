@@ -36,13 +36,13 @@ export class AuditService extends TransactionalService {
   }
 
   findMany(query: AuditQueryDto): Promise<Page<AuditLogPayload>> {
-    const { userId, action, resource, from, to, sortBy, sortOrder } = query;
+    const { userId, action, resource, sortBy, sortOrder } = query;
 
     const where = defined({
       userId,
       action,
       resource,
-      createdAt: dateRange(from, to),
+      createdAt: dateRange(query.fromUtc, query.toUtc),
     });
 
     return paginate<AuditLogPayload>(
