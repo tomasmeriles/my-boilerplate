@@ -2,6 +2,8 @@
 .env
 /node_modules/
 
+.turbo/
+
 # React Router
 /.react-router/
 /build/
