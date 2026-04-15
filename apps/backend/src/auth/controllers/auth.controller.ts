@@ -157,28 +157,39 @@ export class AuthController {
   @Public()
   @Throttle({ default: THROTTLE.SENSITIVE })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Audit(AuditAction.TOKEN_REFRESH, AuditResource.SESSION)
   async refresh(
     @Cookie(REFRESH_COOKIE) refreshToken: string | undefined,
     @Req() req: AuditableRequest,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
     if (!refreshToken) {
+      // Mark as non-auditable: no cookie means the caller was never
+      // authenticated (e.g. Axios refresh interceptor fired on an anonymous
+      // request). This is not a security event worth recording.
+      req._audit = { skipAuditOnError: true };
       throw new UnauthorizedException('No refresh token provided');
     }
 
-    const { tokens, userId } = await this.auth.refreshTokenPair(refreshToken);
-    req._audit = { userId };
-    res.cookie(
-      ACCESS_COOKIE,
-      tokens.accessToken,
-      this.auth.accessCookieOptions(),
-    );
-    res.cookie(
-      REFRESH_COOKIE,
-      tokens.refreshToken,
-      this.auth.refreshCookieOptions(tokens.refreshMaxAge),
-    );
+    try {
+      const { tokens, userId } = await this.auth.refreshTokenPair(refreshToken);
+      req._audit = { userId };
+      res.cookie(
+        ACCESS_COOKIE,
+        tokens.accessToken,
+        this.auth.accessCookieOptions(),
+      );
+      res.cookie(
+        REFRESH_COOKIE,
+        tokens.refreshToken,
+        this.auth.refreshCookieOptions(tokens.refreshMaxAge),
+      );
+    } catch (err) {
+      // Clear stale cookies so the browser doesn't retry forever with an
+      // invalid token (e.g. after a DB reset or a broken rotation chain).
+      res.clearCookie(ACCESS_COOKIE, { path: '/' });
+      res.clearCookie(REFRESH_COOKIE, { path: '/' });
+      throw err;
+    }
   }
 
   // -----------------------------------------------------------------------
