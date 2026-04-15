@@ -120,7 +120,7 @@ function AuditLogsTable() {
                   )}
                 </TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground">
-                  {log.ip ?? '—'}
+                  {log.ip ?? '-'}
                 </TableCell>
                 <TableCell className="text-muted-foreground text-sm">
                   {formatDateTime(log.createdAt, 'yyyy-MM-dd HH:mm:ss.SSS')}

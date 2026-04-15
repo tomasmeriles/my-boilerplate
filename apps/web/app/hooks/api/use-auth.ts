@@ -42,7 +42,7 @@ export function useLogout() {
     onSuccess: () => {
       // Set me to null before removing other queries. clear() would evict
       // the me entry, causing useMe() to refetch /auth/me, which returns
-      // 401, which triggers the refresh interceptor with no cookie —
+      // 401, which triggers the refresh interceptor with no cookie -
       // producing a spurious "No refresh token provided" failed audit log.
       queryClient.setQueryData(authKeys.me(), null);
       queryClient.removeQueries({

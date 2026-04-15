@@ -13,12 +13,12 @@ type Constructor = new (...args: any[]) => object;
  * Date-only values are expanded to the start/end of the day in `timezone`.
  * `timezone` defaults to `'UTC'` when omitted.
  *
- * @example — combined with WithSort and PaginationQueryDto
+ * @example - combined with WithSort and PaginationQueryDto
  * export class AuditQueryDto extends WithDateRange(
  *   WithSort(AUDIT_LOG_SORT_FIELDS, PaginationQueryDto),
  * ) { ... }
  *
- * @example — reading UTC dates in a service
+ * @example - reading UTC dates in a service
  * createdAt: dateRange(query.fromUtc, query.toUtc)
  */
 export function WithDateRange<TBase extends Constructor>(Base: TBase) {

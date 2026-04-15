@@ -3,12 +3,12 @@ import { useEffect, useState } from 'react';
 /**
  * Represents the current screen size breakpoint.
  *
- * - `xs`  — Extra small  (< 640px)   — Small phones
- * - `sm`  — Small        (≥ 640px)   — Large phones / small tablets
- * - `md`  — Medium       (≥ 768px)   — Tablets
- * - `lg`  — Large        (≥ 1024px)  — Laptops / small desktops
- * - `xl`  — Extra large  (≥ 1280px)  — Desktops
- * - `2xl` — 2X large     (≥ 1536px)  — Large / wide-screen desktops
+ * - `xs`  - Extra small  (< 640px)   - Small phones
+ * - `sm`  - Small        (≥ 640px)   - Large phones / small tablets
+ * - `md`  - Medium       (≥ 768px)   - Tablets
+ * - `lg`  - Large        (≥ 1024px)  - Laptops / small desktops
+ * - `xl`  - Extra large  (≥ 1280px)  - Desktops
+ * - `2xl` - 2X large     (≥ 1536px)  - Large / wide-screen desktops
  */
 export type Breakpoint = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 

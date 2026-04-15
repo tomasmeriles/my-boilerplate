@@ -2,7 +2,7 @@ import { registerDecorator, ValidationOptions } from 'class-validator';
 import { IsDateRangeValidConstraint } from '../validators/is-date-range-valid.validator';
 
 /**
- * Cross-field validator — ensures that the decorated property (`to`) is not
+ * Cross-field validator - ensures that the decorated property (`to`) is not
  * earlier than the `from` field on the same object.
  *
  * Apply to the `to` field. Both `from` and `to` must be valid ISO 8601 strings

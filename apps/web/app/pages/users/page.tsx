@@ -93,7 +93,7 @@ function UsersTable() {
                         {(user.name ?? user.email).slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">{user.name ?? '—'}</span>
+                    <span className="font-medium">{user.name ?? '-'}</span>
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">

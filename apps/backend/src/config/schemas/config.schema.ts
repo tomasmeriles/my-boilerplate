@@ -22,6 +22,12 @@ export const configSchema = z.object({
   // Redis
   REDIS_URL: z.string().url(),
 
+  // S3 / Object Storage
+  S3_REGION: z.string().min(1),
+  S3_ACCESS_KEY_ID: z.string().min(1),
+  S3_SECRET_ACCESS_KEY: z.string().min(1),
+  S3_BUCKET: z.string().min(1),
+
   // ---------------------------------------------------------------------------
   // Non-critical configs - these have defaults, so the app can start even if they're missing/invalid.
   // ---------------------------------------------------------------------------
@@ -35,6 +41,14 @@ export const configSchema = z.object({
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
+
+  // S3 - optional, only needed for MinIO / self-hosted
+  S3_ENDPOINT: z.string().url().optional(),
+  S3_FORCE_PATH_STYLE: z.coerce.boolean().default(false),
+  // CDN or custom public base URL for public objects.
+  // If set, getPublicUrl() returns `${S3_PUBLIC_BASE_URL}/${key}`.
+  // If omitted, the URL is derived from S3_ENDPOINT (MinIO) or AWS virtual-hosted style.
+  S3_PUBLIC_BASE_URL: z.string().url().optional(),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

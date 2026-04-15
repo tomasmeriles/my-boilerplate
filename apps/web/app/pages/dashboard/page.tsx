@@ -40,7 +40,7 @@ export default function DashboardPage() {
           <CardContent>
             <p className="text-2xl font-bold">{user?.email}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Joined {user ? formatDate(user.createdAt) : '—'}
+              Joined {user ? formatDate(user.createdAt) : '-'}
             </p>
           </CardContent>
         </Card>

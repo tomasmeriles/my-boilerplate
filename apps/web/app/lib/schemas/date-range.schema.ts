@@ -18,7 +18,7 @@ export const isoDateField = z
 
 /**
  * Raw shape for the date range fields. Spread this into a `z.object()`
- * before calling `refineDateRange()` — which converts the schema to
+ * before calling `refineDateRange()` - which converts the schema to
  * `ZodEffects` and blocks further `.extend()` calls.
  */
 export const dateRangeShape = {
@@ -28,7 +28,7 @@ export const dateRangeShape = {
 };
 
 /**
- * Pure `ZodObject` — extensible with `.extend()` or `.merge()`.
+ * Pure `ZodObject` - extensible with `.extend()` or `.merge()`.
  * Does NOT include cross-field validation; call `refineDateRange()` after
  * all fields have been composed.
  */
@@ -44,12 +44,12 @@ export const dateRangeSchema = z.object(dateRangeShape);
  * Must be called **last** because `.superRefine()` converts `ZodObject`
  * to `ZodEffects`, which cannot be extended further.
  *
- * @example — spread shape + own fields, then refine
+ * @example - spread shape + own fields, then refine
  * export const auditFilterSchema = refineDateRange(
  *   z.object({ ...dateRangeShape, userId: z.string().optional() }),
  * );
  *
- * @example — extend an existing schema, then refine
+ * @example - extend an existing schema, then refine
  * export const reportsFilterSchema = refineDateRange(
  *   dateRangeSchema.extend({ reportType: z.string() }),
  * );

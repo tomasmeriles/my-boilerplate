@@ -20,12 +20,12 @@ export function defined<T extends object>(
 /**
  * Builds a Prisma `OR` full-text search filter across multiple string fields.
  * Returns `undefined` when `term` is absent so it spreads safely alongside
- * `defined()` — both treat `undefined` the same way.
+ * `defined()` - both treat `undefined` the same way.
  *
- * @example — search only
+ * @example - search only
  * const where = buildSearch(search, ['name', 'email']);
  *
- * @example — combined with exact filters
+ * @example - combined with exact filters
  * const where = { ...defined({ globalRole }), ...buildSearch(search, ['name', 'email']) };
  * // Returns {} when no term, so it spreads safely without filtering.
  */

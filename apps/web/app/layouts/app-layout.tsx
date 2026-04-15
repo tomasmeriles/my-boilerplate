@@ -12,7 +12,7 @@ export default function AppLayout() {
   // Navigate to /login after the render where isAuthenticated becomes false.
   // We cannot rely on the mutation's onSuccess callback because React 18
   // batches the setQueryData state update, so the router context is still
-  // stale when navigate() is called there — causing authLayoutRoute.beforeLoad
+  // stale when navigate() is called there  -causing authLayoutRoute.beforeLoad
   // to see isAuthenticated=true and redirect back to /dashboard.
   // useEffect runs after the commit, so the context is always up-to-date here.
   useEffect(() => {

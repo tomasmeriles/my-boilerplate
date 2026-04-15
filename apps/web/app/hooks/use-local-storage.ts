@@ -15,7 +15,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     try {
       window.localStorage.setItem(key, JSON.stringify(value));
     } catch {
-      // localStorage quota exceeded or unavailable — ignore
+      // localStorage quota exceeded or unavailable - ignore
     }
   }, [key, value]);
 

@@ -5,7 +5,7 @@ import { ConfigService } from '../config/services/config.service';
 
 /**
  * Global module that bootstraps the BullMQ connection once using the app's
- * REDIS_URL. Import it in AppModule — feature modules then use
+ * REDIS_URL. Import it in AppModule - feature modules then use
  * BullModule.registerQueue() directly without worrying about the connection.
  *
  * @example

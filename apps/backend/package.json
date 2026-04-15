@@ -38,6 +38,8 @@
     "@nestjs/throttler": "^6.5.0",
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
+    "@aws-sdk/client-s3": "^3.823.0",
+    "@aws-sdk/s3-request-presigner": "^3.823.0",
     "argon2": "^0.44.0",
     "bullmq": "^5.73.0",
     "class-transformer": "^0.5.1",
@@ -57,6 +59,7 @@
     "pino-http": "^11.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "sharp": "^0.34.2",
     "zod": "^3.25.76"
   },
   "devDependencies": {

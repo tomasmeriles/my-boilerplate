@@ -20,7 +20,7 @@ export function isValidIANATimezone(tz: string): boolean {
  *
  * @example
  * parseToUtc('2026-04-15T10:30:00', 'America/New_York')
- * // → 2026-04-15T14:30:00.000Z
+ * // -> 2026-04-15T14:30:00.000Z
  */
 export function parseToUtc(value: string, tz: string = 'UTC'): Date {
   return DateTime.fromISO(value, { zone: tz }).toUTC().toJSDate();
@@ -35,7 +35,7 @@ export function parseToUtc(value: string, tz: string = 'UTC'): Date {
  *
  * @example
  * startOfDayUtc('2026-04-15', 'America/New_York')
- * // → 2026-04-15T04:00:00.000Z  (midnight ET = 04:00 UTC)
+ * // -> 2026-04-15T04:00:00.000Z  (midnight ET = 04:00 UTC)
  */
 export function startOfDayUtc(value: string, tz: string = 'UTC'): Date {
   return DateTime.fromISO(value, { zone: tz })
@@ -52,7 +52,7 @@ export function startOfDayUtc(value: string, tz: string = 'UTC'): Date {
  *
  * @example
  * endOfDayUtc('2026-04-15', 'America/New_York')
- * // → 2026-04-16T03:59:59.999Z  (23:59:59.999 ET = 04:00 UTC next day)
+ * // -> 2026-04-16T03:59:59.999Z  (23:59:59.999 ET = 04:00 UTC next day)
  */
 export function endOfDayUtc(value: string, tz: string = 'UTC'): Date {
   return DateTime.fromISO(value, { zone: tz }).endOf('day').toUTC().toJSDate();
