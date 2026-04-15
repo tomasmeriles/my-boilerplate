@@ -34,7 +34,7 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// ─── Response interceptor: 401 → refresh → retry ────────────────────────────
+// ─── Response interceptor: 401 -> refresh -> retry ────────────────────────────
 
 const SKIP_REFRESH = [
   '/auth/refresh',
@@ -60,7 +60,10 @@ apiClient.interceptors.response.use(
     if (isRefreshing) {
       return new Promise<void>((resolve, reject) => {
         pendingQueue.push({ resolve, reject });
-      }).then(() => apiClient(original));
+      }).then(() => {
+        original._retry = true;
+        return apiClient(original);
+      });
     }
 
     original._retry = true;

@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import crypto from 'crypto';
 import { DateTime } from 'luxon';
 import { TransactionalService } from '../../common/base/transactional-service.base';
@@ -71,10 +72,21 @@ export class RefreshTokensService extends TransactionalService {
     const oldHash = this.hash(oldToken);
     const newHash = this.hash(newToken);
 
-    await this.db.refreshToken.update({
-      where: { tokenHash: oldHash },
-      data: { revokedAt: DateTime.utc().toJSDate(), replacedBy: newHash },
-    });
+    try {
+      await this.db.refreshToken.update({
+        where: { tokenHash: oldHash, revokedAt: null },
+        data: { revokedAt: DateTime.utc().toJSDate(), replacedBy: newHash },
+      });
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2025'
+      ) {
+        // Another concurrent request already rotated this token
+        throw new UnauthorizedException('Refresh token already used');
+      }
+      throw err;
+    }
     await this.db.refreshToken.create({
       data: { tokenHash: newHash, userId, expiresAt },
     });
