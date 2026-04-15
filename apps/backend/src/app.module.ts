@@ -32,7 +32,12 @@ import { QueueModule } from './queue/queue.module';
             return id;
           },
           transport: config.isDevelopment
-            ? { target: 'pino-pretty', options: { singleLine: true } }
+            ? {
+                target: 'pino-pretty',
+                // pino-pretty options: singleLine for easier parsing, ignore req/res to avoid logging them entirely
+                // (they can be very large and contain sensitive info)
+                options: { singleLine: true, ignore: 'req,res' },
+              }
             : undefined,
           level: config.get('LOG_LEVEL'),
         },

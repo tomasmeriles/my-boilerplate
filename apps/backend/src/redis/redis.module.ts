@@ -16,7 +16,7 @@ import { RedisLifecycleService } from './services/redis-lifecycle.service';
           lazyConnect: true,
           connectTimeout: 5_000,
           commandTimeout: 5_000,
-          enableOfflineQueue: false,
+          enableOfflineQueue: true,
           maxRetriesPerRequest: null,
           retryStrategy: (times) =>
             times > 5 ? null : Math.min(times * 200, 2_000),
