@@ -194,7 +194,7 @@ export class AuthService extends TransactionalService {
       secure: this.config.isProduction,
       sameSite: 'lax',
       maxAge,
-      path: '/auth/refresh',
+      path: '/',
     };
   }
 
