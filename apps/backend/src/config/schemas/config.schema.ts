@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const emptyToUndefined = (value: unknown) => (value === '' ? undefined : value);
+
 export const configSchema = z.object({
   // ---------------------------------------------------------------------------
   // Critical configs - if any of these are missing/invalid, the app would fail to start.
@@ -43,12 +45,15 @@ export const configSchema = z.object({
     .default('info'),
 
   // S3 - optional, only needed for MinIO / self-hosted
-  S3_ENDPOINT: z.string().url().optional(),
+  S3_ENDPOINT: z.preprocess(emptyToUndefined, z.string().url().optional()),
   S3_FORCE_PATH_STYLE: z.coerce.boolean().default(false),
   // CDN or custom public base URL for public objects.
   // If set, getPublicUrl() returns `${S3_PUBLIC_BASE_URL}/${key}`.
   // If omitted, the URL is derived from S3_ENDPOINT (MinIO) or AWS virtual-hosted style.
-  S3_PUBLIC_BASE_URL: z.string().url().optional(),
+  S3_PUBLIC_BASE_URL: z.preprocess(
+    emptyToUndefined,
+    z.string().url().optional(),
+  ),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

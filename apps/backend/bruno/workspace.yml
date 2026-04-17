@@ -1,15 +1,15 @@
 opencollection: 1.0.0
 info:
-  name: 'Boilerplate'
+  name: "Boilerplate"
   type: workspace
 
 collections:
-  - name: 'auth'
-    path: 'collections/auth'
-  - name: 'audit'
-    path: 'collections/audit'
-  - name: 'health'
-    path: 'collections/health'
+  - name: "auth"
+    path: "collections/auth"
+  - name: "audit"
+    path: "collections/audit"
+  - name: "health"
+    path: "collections/health"
 
 specs:
 

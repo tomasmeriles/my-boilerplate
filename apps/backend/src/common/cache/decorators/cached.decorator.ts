@@ -25,9 +25,11 @@ export function Cached<TArgs extends unknown[]>(
       this: HasCacheHost,
       ...args: unknown[]
     ): Promise<unknown> {
-      const cacheKey = options.key(...args);
+      const cacheKey = options.key(...(args as TArgs));
       const ttl =
-        typeof options.ttl === 'function' ? options.ttl(...args) : options.ttl;
+        typeof options.ttl === 'function'
+          ? options.ttl(...(args as TArgs))
+          : options.ttl;
 
       return this._cacheHost.wrap(cacheKey, ttl, () =>
         original.apply(this, args),
