@@ -18,7 +18,6 @@ COPY packages/ ./packages/
 COPY apps/backend/ ./apps/backend/
 COPY package.json pnpm-workspace.yaml ./
 WORKDIR /app/apps/backend
-RUN pnpm prisma generate
 RUN pnpm build
 
 # Stage 3: production image
