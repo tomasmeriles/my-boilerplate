@@ -41,6 +41,7 @@ import type { SafeUser } from '../../modules/users/selects/user.select';
 
 const ACCESS_COOKIE = 'access_token';
 const REFRESH_COOKIE = 'refresh_token';
+const CSRF_COOKIE = 'csrf_token';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -63,9 +64,10 @@ export class AuthController {
     @Body() dto: RegisterDto,
     @Req() req: AuditableRequest,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<SafeUser> {
+  ): Promise<{ user: SafeUser; csrfToken: string }> {
     const { tokens, user } = await this.auth.register(dto);
     req._audit = { userId: user.id };
+    const csrfToken = this.auth.generateCsrfToken();
     res.cookie(
       ACCESS_COOKIE,
       tokens.accessToken,
@@ -76,7 +78,12 @@ export class AuthController {
       tokens.refreshToken,
       this.auth.refreshCookieOptions(tokens.refreshMaxAge),
     );
-    return user;
+    res.cookie(
+      CSRF_COOKIE,
+      csrfToken,
+      this.auth.csrfCookieOptions(tokens.refreshMaxAge),
+    );
+    return { user, csrfToken };
   }
 
   /** Authenticates an existing user with email + password and issues a token pair */
@@ -92,9 +99,10 @@ export class AuthController {
   async login(
     @Req() req: AuditableRequest & { user: SafeUser },
     @Res({ passthrough: true }) res: Response,
-  ): Promise<SafeUser> {
+  ): Promise<{ user: SafeUser; csrfToken: string }> {
     const { tokens, user } = await this.auth.loginWithPassword(req.user);
     req._audit = { userId: user.id, metadata: { provider: 'local' } };
+    const csrfToken = this.auth.generateCsrfToken();
     res.cookie(
       ACCESS_COOKIE,
       tokens.accessToken,
@@ -105,7 +113,12 @@ export class AuthController {
       tokens.refreshToken,
       this.auth.refreshCookieOptions(tokens.refreshMaxAge),
     );
-    return user;
+    res.cookie(
+      CSRF_COOKIE,
+      csrfToken,
+      this.auth.csrfCookieOptions(tokens.refreshMaxAge),
+    );
+    return { user, csrfToken };
   }
 
   // -----------------------------------------------------------------------
@@ -145,6 +158,11 @@ export class AuthController {
       tokens.refreshToken,
       this.auth.refreshCookieOptions(tokens.refreshMaxAge),
     );
+    res.cookie(
+      CSRF_COOKIE,
+      this.auth.generateCsrfToken(),
+      this.auth.csrfCookieOptions(tokens.refreshMaxAge),
+    );
     res.redirect(this.auth.frontendUrl());
   }
 
@@ -152,16 +170,17 @@ export class AuthController {
   @Post('refresh')
   @ApiOperation({ summary: 'Rotate access + refresh token pair' })
   @ApiCookieAuth('access_token')
-  @ApiNoContentResponse({ description: 'Tokens rotated - new cookies set' })
+  @ApiOkResponse({
+    description: 'Tokens rotated - new cookies set, csrfToken in body',
+  })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid refresh token' })
   @Public()
   @Throttle({ default: THROTTLE.SENSITIVE })
-  @HttpCode(HttpStatus.NO_CONTENT)
   async refresh(
     @Cookie(REFRESH_COOKIE) refreshToken: string | undefined,
     @Req() req: AuditableRequest,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<void> {
+  ): Promise<{ csrfToken: string }> {
     if (!refreshToken) {
       // Mark as non-auditable: no cookie means the caller was never
       // authenticated (e.g. Axios refresh interceptor fired on an anonymous
@@ -173,6 +192,7 @@ export class AuthController {
     try {
       const { tokens, userId } = await this.auth.refreshTokenPair(refreshToken);
       req._audit = { userId };
+      const csrfToken = this.auth.generateCsrfToken();
       res.cookie(
         ACCESS_COOKIE,
         tokens.accessToken,
@@ -183,6 +203,12 @@ export class AuthController {
         tokens.refreshToken,
         this.auth.refreshCookieOptions(tokens.refreshMaxAge),
       );
+      res.cookie(
+        CSRF_COOKIE,
+        csrfToken,
+        this.auth.csrfCookieOptions(tokens.refreshMaxAge),
+      );
+      return { csrfToken };
     } catch (err) {
       // Clear stale cookies so the browser doesn't retry forever with an
       // invalid token (e.g. after a DB reset or a broken rotation chain).
@@ -195,6 +221,24 @@ export class AuthController {
   // -----------------------------------------------------------------------
   // Session endpoints
   // -----------------------------------------------------------------------
+
+  /**
+   * Issues a fresh signed CSRF token and sets the csrf_token cookie.
+   * Must be called after an OAuth redirect (where csrfToken is not in the
+   * body) and on page reload before making any state-changing request.
+   * Requires a valid access_token cookie (protected route).
+   */
+  @Get('csrf-token')
+  @ApiOperation({ summary: 'Get a fresh signed CSRF token' })
+  @ApiCookieAuth('access_token')
+  @ApiOkResponse({ description: 'Fresh CSRF token issued' })
+  @SkipThrottle()
+  csrfToken(@Res({ passthrough: true }) res: Response): { csrfToken: string } {
+    const maxAge = this.auth.refreshMaxAgeMs();
+    const csrfToken = this.auth.generateCsrfToken();
+    res.cookie(CSRF_COOKIE, csrfToken, this.auth.csrfCookieOptions(maxAge));
+    return { csrfToken };
+  }
 
   /** Returns the current user plus CASL abilities scoped to the given tenant */
   @Get('me')
@@ -227,5 +271,6 @@ export class AuthController {
     req._audit = { userId };
     res.clearCookie(ACCESS_COOKIE, { path: '/' });
     res.clearCookie(REFRESH_COOKIE, { path: '/' });
+    res.clearCookie(CSRF_COOKIE, { path: '/' });
   }
 }

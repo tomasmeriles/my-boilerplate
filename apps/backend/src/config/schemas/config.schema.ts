@@ -11,6 +11,15 @@ export const configSchema = z.object({
 
   FRONTEND_URL: z.string().url(),
 
+  // Shared registrable domain for cookies (e.g. ".tudominio.com").
+  // Required in production so Safari ITP treats auth cookies as first-party.
+  // Must start with a dot to cover all subdomains.
+  // Leave empty in development (cookies are set for localhost only).
+  COOKIE_DOMAIN: z.preprocess(
+    emptyToUndefined,
+    z.string().startsWith('.').optional(),
+  ),
+
   // Google OAuth
   GOOGLE_CLIENT_ID: z.string().min(1),
   GOOGLE_CLIENT_SECRET: z.string().min(1),
@@ -20,6 +29,9 @@ export const configSchema = z.object({
   JWT_SECRET: z.string().min(32),
   JWT_ACCESS_EXPIRES_MINUTES: z.coerce.number(),
   JWT_REFRESH_EXPIRES_DAYS: z.coerce.number(),
+
+  // CSRF
+  CSRF_SECRET: z.string().min(32),
 
   // Redis
   REDIS_URL: z.string().url(),

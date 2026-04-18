@@ -15,3 +15,9 @@ export interface MeResponse {
   user: SafeUser;
   abilities: PackedAbility[];
 }
+
+/** Shape returned by login and register */
+export interface AuthResponse {
+  user: SafeUser;
+  csrfToken: string;
+}

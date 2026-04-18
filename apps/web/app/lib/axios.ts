@@ -8,6 +8,24 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// ─── CSRF token (in-memory) ────────────────────────────────────────────────────
+// Stored in JS memory — not accessible to other origins.
+// Set after login/register/refresh; read by the request interceptor.
+
+let csrfToken: string | null = null;
+
+export function setCsrfToken(token: string): void {
+  csrfToken = token;
+}
+
+export function hasCsrfToken(): boolean {
+  return csrfToken !== null;
+}
+
+export function clearCsrfToken(): void {
+  csrfToken = null;
+}
+
 // ─── Refresh state ────────────────────────────────────────────────────────────
 
 let isRefreshing = false;
@@ -22,7 +40,10 @@ function drainQueue(error: unknown) {
 }
 
 // ─── Request interceptor ──────────────────────────────────────────────────────
-// Allows callers to pass a tenantId in config for tenant-scoped CASL checks.
+// 1. Forwards tenantId as a header when provided in config.
+// 2. Injects the CSRF token for state-changing requests.
+
+const SAFE_METHODS = new Set(['get', 'head', 'options']);
 
 apiClient.interceptors.request.use((config) => {
   const tenantId = (
@@ -31,6 +52,11 @@ apiClient.interceptors.request.use((config) => {
   if (tenantId) {
     config.headers['x-tenant-id'] = tenantId;
   }
+
+  if (csrfToken && !SAFE_METHODS.has(config.method?.toLowerCase() ?? '')) {
+    config.headers['x-csrf-token'] = csrfToken;
+  }
+
   return config;
 });
 
@@ -65,7 +91,10 @@ apiClient.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      await apiClient.post('/auth/refresh');
+      const { data } = await apiClient.post<{ csrfToken: string }>(
+        '/auth/refresh',
+      );
+      setCsrfToken(data.csrfToken);
       drainQueue(null);
       return apiClient(original);
     } catch (refreshError) {

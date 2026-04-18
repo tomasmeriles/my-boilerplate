@@ -1,5 +1,5 @@
 # Stage 1: install all deps (needed for build with monorepo packages)
-FROM node:22-alpine AS deps
+FROM node:22.12-alpine AS deps
 RUN npm install -g pnpm
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
@@ -8,7 +8,7 @@ COPY apps/backend/package.json ./apps/backend/
 RUN pnpm install --frozen-lockfile
 
 # Stage 2: build
-FROM node:22-alpine AS builder
+FROM node:22.12-alpine AS builder
 RUN npm install -g pnpm
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -22,7 +22,7 @@ RUN pnpm prisma generate
 RUN pnpm build
 
 # Stage 3: production image
-FROM node:22-alpine AS runner
+FROM node:22.12-alpine AS runner
 RUN npm install -g pnpm
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./

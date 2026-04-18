@@ -5,7 +5,15 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router';
-import { TanStackRouterDevtools } from '@tanstack/router-devtools';
+import { lazy } from 'react';
+
+const TanStackRouterDevtools = import.meta.env.PROD
+  ? () => null
+  : lazy(() =>
+      import('@tanstack/router-devtools').then((m) => ({
+        default: m.TanStackRouterDevtools,
+      })),
+    );
 import AuthLayout from '~/layouts/auth-layout';
 import AppLayout from '~/layouts/app-layout';
 import IndexPage from '~/pages/index/page';

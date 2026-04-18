@@ -14,6 +14,7 @@ import { AuditInterceptor } from './modules/audit/interceptors/audit.interceptor
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './modules/users/users.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { CsrfGuard } from './auth/guards/csrf.guard';
 import { PoliciesGuard } from './casl/guards/policies.guard';
 import { CaslModule } from './casl/casl.module';
 import { QueueModule } from './queue/queue.module';
@@ -65,6 +66,7 @@ import { QueueModule } from './queue/queue.module';
   controllers: [],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: CsrfGuard },
     { provide: APP_GUARD, useClass: PoliciesGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },

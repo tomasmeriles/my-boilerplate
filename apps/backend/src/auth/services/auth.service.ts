@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { createHmac, randomBytes } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { DateTime } from 'luxon';
 import type { CookieOptions } from 'express';
@@ -181,9 +182,12 @@ export class AuthService extends TransactionalService {
     return {
       httpOnly: true,
       secure: this.config.isProduction,
-      sameSite: 'lax',
+      sameSite: this.config.isProduction ? 'none' : 'lax',
       maxAge: this.config.get('JWT_ACCESS_EXPIRES_MINUTES') * 60 * 1000,
       path: '/',
+      ...(this.config.get('COOKIE_DOMAIN') && {
+        domain: this.config.get('COOKIE_DOMAIN'),
+      }),
     };
   }
 
@@ -192,10 +196,43 @@ export class AuthService extends TransactionalService {
     return {
       httpOnly: true,
       secure: this.config.isProduction,
-      sameSite: 'lax',
+      sameSite: this.config.isProduction ? 'none' : 'lax',
       maxAge,
       path: '/',
+      ...(this.config.get('COOKIE_DOMAIN') && {
+        domain: this.config.get('COOKIE_DOMAIN'),
+      }),
     };
+  }
+
+  /**
+   * Cookie options for the CSRF double-submit token.
+   * Non-httpOnly so the frontend JS can read and forward it as a header.
+   */
+  csrfCookieOptions(maxAge: number): CookieOptions {
+    return {
+      httpOnly: false,
+      secure: this.config.isProduction,
+      sameSite: this.config.isProduction ? 'none' : 'lax',
+      maxAge,
+      path: '/',
+      ...(this.config.get('COOKIE_DOMAIN') && {
+        domain: this.config.get('COOKIE_DOMAIN'),
+      }),
+    };
+  }
+
+  /**
+   * Generates a signed CSRF token using HMAC-SHA256.
+   * Format: `<random>.<signature>` where signature = HMAC(CSRF_SECRET, random).
+   * Even if an attacker injects an arbitrary cookie value they cannot
+   * produce a valid signature without knowing CSRF_SECRET.
+   */
+  generateCsrfToken(): string {
+    const random = randomBytes(32).toString('hex');
+    const secret = this.config.get('CSRF_SECRET');
+    const signature = createHmac('sha256', secret).update(random).digest('hex');
+    return `${random}.${signature}`;
   }
 
   /** Frontend URL for post-login redirect */
@@ -227,7 +264,7 @@ export class AuthService extends TransactionalService {
     return DateTime.utc().plus({ days }).toJSDate();
   }
 
-  private refreshMaxAgeMs(): number {
+  refreshMaxAgeMs(): number {
     const days = this.config.get('JWT_REFRESH_EXPIRES_DAYS');
     return days * 24 * 60 * 60 * 1000;
   }
