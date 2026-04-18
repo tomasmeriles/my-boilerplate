@@ -1,5 +1,5 @@
 {
-  "outputDirectory": "dist",
+  "outputDirectory": "build/client",
   "buildCommand": "pnpm --filter web build",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
