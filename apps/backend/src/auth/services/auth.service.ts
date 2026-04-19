@@ -79,9 +79,10 @@ export class AuthService extends TransactionalService {
 
     if (!valid) return null;
 
-    if (!user.emailVerifiedAt) {
-      throw new ForbiddenException('Email not verified');
-    }
+    // TODO: Enable email verification flow and remove this bypass
+    // if (!user.emailVerifiedAt) {
+    //   throw new ForbiddenException('Email not verified');
+    // }
 
     // Strip passwordHash before returning
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
