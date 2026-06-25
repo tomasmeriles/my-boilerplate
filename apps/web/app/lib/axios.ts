@@ -40,19 +40,14 @@ function drainQueue(error: unknown) {
 }
 
 // ─── Request interceptor ──────────────────────────────────────────────────────
-// 1. Forwards tenantId as a header when provided in config.
-// 2. Injects the CSRF token for state-changing requests.
+// Injects the CSRF token for state-changing requests. Tenant-scoped endpoints
+// take the tenant id from the URL path (e.g. /tenants/:tenantId/...), not
+// from a header - a header can be set to any tenant the caller belongs to
+// regardless of which tenant's resource the URL actually targets.
 
 const SAFE_METHODS = new Set(['get', 'head', 'options']);
 
 apiClient.interceptors.request.use((config) => {
-  const tenantId = (
-    config as InternalAxiosRequestConfig & { tenantId?: string }
-  ).tenantId;
-  if (tenantId) {
-    config.headers['x-tenant-id'] = tenantId;
-  }
-
   if (csrfToken && !SAFE_METHODS.has(config.method?.toLowerCase() ?? '')) {
     config.headers['x-csrf-token'] = csrfToken;
   }

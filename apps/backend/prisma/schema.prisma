@@ -20,10 +20,12 @@ model User {
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
-  oauthAccounts OAuthAccount[]
-  refreshTokens RefreshToken[]
-  auditLogs     AuditLog[]
-  memberships   TenantMember[] // which tenants this user belongs to
+  oauthAccounts     OAuthAccount[]
+  refreshTokens     RefreshToken[]
+  auditLogs         AuditLog[]
+  memberships       TenantMember[] // which tenants this user belongs to
+  notifications     Notification[]
+  pushSubscriptions PushSubscription[]
 
   @@map("users")
 }
@@ -195,4 +197,44 @@ model TenantMember {
   @@unique([userId, tenantId]) // a user can only have one role per tenant
   @@index([tenantId])
   @@map("tenant_members")
+}
+
+// ---------------------------------------------------------------------------
+// Notifications - in-app + web push
+//
+// NotificationType is intentionally minimal here; extend it with app-specific
+// variants as features are added (e.g. ORDER_APPROVED, MENTION, ...).
+// ---------------------------------------------------------------------------
+
+enum NotificationType {
+  SYSTEM
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  data      Json? // arbitrary metadata
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+/// Browser push subscription (Web Push API). One row per device/browser.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }

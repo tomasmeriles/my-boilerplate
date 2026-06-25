@@ -18,6 +18,8 @@ import { CsrfGuard } from './auth/guards/csrf.guard';
 import { PoliciesGuard } from './casl/guards/policies.guard';
 import { CaslModule } from './casl/casl.module';
 import { QueueModule } from './queue/queue.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ExportModule } from './common/export/export.module';
 
 @Module({
   imports: [
@@ -51,6 +53,8 @@ import { QueueModule } from './queue/queue.module';
     CaslModule,
     QueueModule,
     HealthModule,
+    NotificationsModule,
+    ExportModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({

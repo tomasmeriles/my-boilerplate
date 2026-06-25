@@ -6,6 +6,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { Logger } from 'nestjs-pino';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module';
 import { ConfigService } from './config/services/config.service';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -43,6 +44,8 @@ async function bootstrap() {
     origin: config.get('FRONTEND_URL'),
     credentials: true,
   });
+
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   if (!config.isProduction) {
     const swaggerConfig = new DocumentBuilder()

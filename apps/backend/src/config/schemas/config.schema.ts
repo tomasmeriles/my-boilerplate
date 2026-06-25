@@ -66,6 +66,14 @@ export const configSchema = z.object({
     emptyToUndefined,
     z.string().url().optional(),
   ),
+
+  // Web Push (VAPID) - optional, push notifications disabled when absent
+  VAPID_PUBLIC_KEY: z.preprocess(emptyToUndefined, z.string().optional()),
+  VAPID_PRIVATE_KEY: z.preprocess(emptyToUndefined, z.string().optional()),
+  VAPID_CONTACT_EMAIL: z.preprocess(
+    emptyToUndefined,
+    z.string().email().optional(),
+  ),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

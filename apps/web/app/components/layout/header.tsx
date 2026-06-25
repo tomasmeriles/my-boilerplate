@@ -12,6 +12,7 @@ import { Separator } from '~/components/ui/separator';
 import { SidebarTrigger } from '~/components/ui/sidebar';
 import { ThemeToggle } from '~/components/theme-toggle';
 import { UserMenu } from '~/components/layout/user-menu';
+import { NotificationBell } from '~/components/layout/notification-bell';
 
 function buildBreadcrumbs(pathname: string) {
   const parts = pathname.replace(/^\//, '').split('/');
@@ -49,6 +50,7 @@ export function AppHeader() {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="ml-auto flex items-center gap-2">
+        <NotificationBell />
         <ThemeToggle />
         <UserMenu />
       </div>

@@ -147,29 +147,25 @@ export class AuthService extends TransactionalService {
   async logout(refreshToken: string | undefined): Promise<string | null> {
     if (!refreshToken) return null;
     const userId = await this.refreshTokens.revoke(refreshToken);
-    if (userId) await this.abilityCache.delAll(userId);
+    if (userId) await this.abilityCache.del(userId);
     return userId;
   }
 
   /**
-   * Returns the current user profile and their CASL abilities for the given tenant.
-   * Uses Redis cache; falls back to DB if not cached.
+   * Returns the current user profile and their CASL abilities across all of
+   * their tenant memberships. Uses Redis cache; falls back to DB if not cached.
    */
   async getMe(
     user: SafeUser,
-    tenantId: string | null,
   ): Promise<{ user: SafeUser; abilities: PackedAbility[] }> {
-    let abilities = await this.abilityCache.get(user.id, tenantId);
+    let abilities = await this.abilityCache.get(user.id);
 
     if (!abilities) {
       const userWithMemberships = await this.users.findWithMemberships(user.id);
       if (userWithMemberships) {
-        const built = this.abilityFactory.buildAbilities(
-          userWithMemberships,
-          tenantId,
-        );
+        const built = this.abilityFactory.buildAbilities(userWithMemberships);
         abilities = built.rules;
-        await this.abilityCache.set(user.id, tenantId, abilities);
+        await this.abilityCache.set(user.id, abilities);
       } else {
         abilities = [];
       }

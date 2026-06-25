@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { RouterProvider } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { NuqsAdapter } from 'nuqs/adapters/react';
 import { Toaster } from '~/components/ui/sonner';
 import { TooltipProvider } from '~/components/ui/tooltip';
 import { ThemeProvider } from '~/contexts/theme';
@@ -18,7 +19,11 @@ const queryClient = new QueryClient({
 
 function InnerApp() {
   const auth = useAuth();
-  return <RouterProvider router={router} context={{ auth }} />;
+  return (
+    <NuqsAdapter>
+      <RouterProvider router={router} context={{ auth }} />
+    </NuqsAdapter>
+  );
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

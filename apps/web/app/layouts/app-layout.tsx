@@ -4,10 +4,12 @@ import { SidebarInset, SidebarProvider } from '~/components/ui/sidebar';
 import { AppSidebar } from '~/components/layout/sidebar';
 import { AppHeader } from '~/components/layout/header';
 import { useAuth } from '~/contexts/auth';
+import { useNotificationSocket } from '~/hooks/use-websocket';
 
 export default function AppLayout() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  useNotificationSocket();
 
   // Navigate to /login after the render where isAuthenticated becomes false.
   // We cannot rely on the mutation's onSuccess callback because React 18

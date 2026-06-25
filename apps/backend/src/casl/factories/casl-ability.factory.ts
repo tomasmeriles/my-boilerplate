@@ -10,13 +10,13 @@ import type { UserWithMemberships } from '../../modules/users/interfaces/user.in
 @Injectable()
 export class CaslAbilityFactory {
   /**
-   * Builds the ability set for a user in the context of a specific tenant.
-   * If tenantId is null, only global abilities (SUPER_ADMIN) are applied.
+   * Builds the ability set for a user across ALL of their tenant memberships
+   * at once. Per-resource checks must validate the tenantId from the request
+   * (e.g. a route param) against these conditions - never resolve "which
+   * tenant" from a client-supplied header, since that can be spoofed
+   * independently of the resource actually being accessed.
    */
-  buildAbilities(
-    user: UserWithMemberships,
-    tenantId: string | null,
-  ): AppAbility {
+  buildAbilities(user: UserWithMemberships): AppAbility {
     const rules: PackedAbility[] = [];
 
     // SUPER_ADMIN can do everything everywhere
@@ -42,71 +42,73 @@ export class CaslAbilityFactory {
       return createMongoAbility<AppAbility>(rules);
     }
 
-    if (tenantId) {
-      const membership = user.memberships.find((m) => m.tenantId === tenantId);
+    // Tenant-scoped rules based on memberships - one set of rules per tenant
+    // the user actually belongs to, all returned together. Callers narrow
+    // down to a single tenant by checking the resource's own tenantId
+    // (from the URL), not by asking the factory to scope to one up front.
+    for (const membership of user.memberships) {
+      const { tenantId } = membership;
 
-      if (membership) {
-        switch (membership.role) {
-          case TenantRole.OWNER:
-            rules.push({
-              action: 'manage',
-              subject: 'Tenant',
-              conditions: { id: tenantId },
-            });
-            rules.push({
-              action: 'manage',
-              subject: 'TenantMember',
-              conditions: { tenantId },
-            });
-            rules.push({
-              action: 'read',
-              subject: 'User',
-              conditions: { 'memberships.tenantId': tenantId },
-            });
-            break;
+      switch (membership.role) {
+        case TenantRole.OWNER:
+          rules.push({
+            action: 'manage',
+            subject: 'Tenant',
+            conditions: { id: tenantId },
+          });
+          rules.push({
+            action: 'manage',
+            subject: 'TenantMember',
+            conditions: { tenantId },
+          });
+          rules.push({
+            action: 'read',
+            subject: 'User',
+            conditions: { 'memberships.tenantId': tenantId },
+          });
+          break;
 
-          case TenantRole.ADMIN:
-            rules.push({
-              action: 'read',
-              subject: 'Tenant',
-              conditions: { id: tenantId },
-            });
-            rules.push({
-              action: 'create',
-              subject: 'TenantMember',
-              conditions: { tenantId },
-            });
-            rules.push({
-              action: 'read',
-              subject: 'TenantMember',
-              conditions: { tenantId },
-            });
-            rules.push({
-              action: 'update',
-              subject: 'TenantMember',
-              conditions: { tenantId },
-            });
-            rules.push({
-              action: 'read',
-              subject: 'User',
-              conditions: { 'memberships.tenantId': tenantId },
-            });
-            break;
+        case TenantRole.ADMIN:
+          rules.push({
+            action: 'read',
+            subject: 'Tenant',
+            conditions: { id: tenantId },
+          });
+          rules.push({
+            action: 'create',
+            subject: 'TenantMember',
+            conditions: { tenantId },
+          });
+          rules.push({
+            action: 'read',
+            subject: 'TenantMember',
+            conditions: { tenantId },
+          });
+          rules.push({
+            action: 'update',
+            subject: 'TenantMember',
+            conditions: { tenantId },
+          });
+          rules.push({
+            action: 'read',
+            subject: 'User',
+            conditions: { 'memberships.tenantId': tenantId },
+          });
+          break;
 
-          case TenantRole.MEMBER:
-          default:
-            rules.push({
-              action: 'read',
-              subject: 'Tenant',
-              conditions: { id: tenantId },
-            });
-            rules.push({
-              action: 'read',
-              subject: 'TenantMember',
-              conditions: { tenantId },
-            });
-            break;
-        }
+        case TenantRole.MEMBER:
+        default:
+          rules.push({
+            action: 'read',
+            subject: 'Tenant',
+            conditions: { id: tenantId },
+          });
+          rules.push({
+            action: 'read',
+            subject: 'TenantMember',
+            conditions: { tenantId },
+          });
+          break;
       }
     }
 

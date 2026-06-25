@@ -46,9 +46,7 @@ export class PoliciesGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    const tenantId = this.extractTenantId(req);
-
-    const ability = await this.resolveAbility(userId, tenantId);
+    const ability = await this.resolveAbility(userId);
 
     const allowed = handlers.every((handler) => handler(ability, req));
 
@@ -57,17 +55,9 @@ export class PoliciesGuard implements CanActivate {
     return true;
   }
 
-  private extractTenantId(req: Request): string | null {
-    const header = req.headers['x-tenant-id'];
-    return typeof header === 'string' && header.length > 0 ? header : null;
-  }
-
-  private async resolveAbility(
-    userId: string,
-    tenantId: string | null,
-  ): Promise<AppAbility> {
+  private async resolveAbility(userId: string): Promise<AppAbility> {
     // 1. Try Redis cache
-    const cached = await this.abilityCache.get(userId, tenantId);
+    const cached = await this.abilityCache.get(userId);
     if (cached) {
       return createMongoAbility<AppAbility>(cached);
     }
@@ -78,10 +68,10 @@ export class PoliciesGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    const ability = this.abilityFactory.buildAbilities(user, tenantId);
+    const ability = this.abilityFactory.buildAbilities(user);
 
     // 3. Cache the raw rules
-    await this.abilityCache.set(userId, tenantId, ability.rules);
+    await this.abilityCache.set(userId, ability.rules);
 
     return ability;
   }
